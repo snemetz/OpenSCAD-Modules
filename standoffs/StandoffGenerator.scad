@@ -21,10 +21,8 @@
 
 //CUSTOMIZER VARIABLES
 
-/* [Global] */
 //Type of standoff(s) to generate
 Generate = 3; // [1:Single, 2:Array-Same, 3:Array-Samples]
-
 /* [Body] */
 //Choose shape of the main body
 Shape = 3; // [1:Round, 2:Square, 3:Hex]
@@ -32,7 +30,6 @@ Shape = 3; // [1:Round, 2:Square, 3:Hex]
 BaseHeight = 15; // [0:50]
 //Select diameter of the main body, mm
 BaseDia = 6; // [0:30]
-
 /* [Top] */
 //Choose style of the top section
 Style = 1; // [1:Male, 2:Snap-In, 3:Flat, 4:Female, 5:Hollow]
@@ -40,7 +37,6 @@ Style = 1; // [1:Male, 2:Snap-In, 3:Flat, 4:Female, 5:Hollow]
 TopHeight = 4; // [2:20]
 //Select diameter of the top, mm
 TopDia = 2; // [1:25]
-
 /* [Array Settings] */
 //For array: Space between standoffs, X mm
 X_Offset = 15; // [2:30]
