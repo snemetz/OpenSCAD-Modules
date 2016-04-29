@@ -1,7 +1,9 @@
-// Standoff Module
+// Standoff Generator Module
 //
 // Author: Steven Nemetz
 //
+// Current version: https://github.com/snemetz/OpenSCAD-Modules/tree/master/standoffs
+// Customizable: http://www.thingiverse.com/thing:1528494
 /*
 	REVISION HISTORY
 	v0.1 Added hollow style
@@ -19,20 +21,27 @@
 
 //CUSTOMIZER VARIABLES
 
+/* [Global] */
 //Type of standoff(s) to generate
 Generate = 3; // [1:Single, 2:Array-Same, 3:Array-Samples]
+
+/* [Body] */
 //Choose shape of the main body
 Shape = 3; // [1:Round, 2:Square, 3:Hex]
 //Select height of the main body,  mm
 BaseHeight = 15; // [0:50]
 //Select diameter of the main body, mm
 BaseDia = 6; // [0:30]
+
+/* [Top] */
 //Choose style of the top section
 Style = 1; // [1:Male, 2:Snap-In, 3:Flat, 4:Female, 5:Hollow]
 //Select height of the top, mm
 TopHeight = 4; // [2:20]
 //Select diameter of the top, mm
 TopDia = 2; // [1:25]
+
+/* [Array Settings] */
 //For array: Space between standoffs, X mm
 X_Offset = 15; // [2:30]
 //For array: Space between standoffs, Y mm
@@ -40,6 +49,7 @@ Y_Offset = 10; // [2:30]
 
 //CUSTOMIZER VARIABLES END
 
+/* [Hidden] */
 // Internal variables
 Shapes = [1:3]; // All valid shapes
 Styles = [1:5]; // All valid styles
