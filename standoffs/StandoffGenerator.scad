@@ -6,6 +6,7 @@
 // Customizable: http://www.thingiverse.com/thing:1528494
 /*
 	REVISION HISTORY
+	v0.2 Added Array-Same generation
 	v0.1 Added hollow style
 	Initial code refactored from :
 		eriqjo's Standoff Customizer v1.0
@@ -42,48 +43,53 @@ TopDia = 2; // [1:25]
 X_Offset = 15; // [2:30]
 //For array: Space between standoffs, Y mm
 Y_Offset = 10; // [2:30]
+//For Array-Same
+Columns = 3;
+//For Array-Same
+Rows = 3;
 
 //CUSTOMIZER VARIABLES END
 
 /* [Hidden] */
-// Internal variables
+// For sample array
 Shapes = [1:3]; // All valid shapes
 Styles = [1:5]; // All valid styles
 
-$fn=50; // number of facet fragments for arcs
+RndFrags = 50; // number of facet fragments for round shapes
 // Parameters: style, height, diameter, Thread_Height
 module standoffTop(style, baseHeight, topHeight, diameter) {
 	radius = diameter/2;
 	if (style == 1) { //male
 		translate([0,0, baseHeight + topHeight/2 - 0.1])
-			cylinder(topHeight + 0.1, r = radius, $fn = 50, center = true);
+			cylinder(topHeight + 0.1, r = radius, $fn = RndFrags, center = true);
 	} else if (style == 2) { // snapin
-		$fn=50; // number of facet fragments for arcs
-		// large top height - this is above base
+		// FIX: large top height - this is above base
 		notchW = radius/1.5;//width of the flexy notch in terms of peg radius
 		translate([0,0, baseHeight - 0.1]) // -2 needs to be a calc
 			difference() {
 				union() {
 					// top standoff
-					cylinder(r= radius,h = topHeight+1); //master peg
-					// underside slant
-					translate([0,0,topHeight])cylinder(r1=radius,r2= radius+.5, h =1);// relief for overhang
-					// top slant
-					translate([0,0,topHeight+1])cylinder(r1=radius+.5,r2= radius-.25, h =1); // insertion cone
-					// base - Will remove
-					//cylinder(r = (pegR)+1, h=baseHeight); //standoff is always 2mm> post size (Diameter)
+					cylinder(r= radius,h = topHeight+1, $fn = RndFrags); //master peg
+					// underside slant - relief for overhang
+					translate([0,0,topHeight])
+						cylinder(r1=radius,r2= radius+.5, h =1, $fn = RndFrags);
+					// top slant - insertion cone
+					translate([0,0,topHeight+1])
+						cylinder(r1=radius+.5,r2= radius-.25, h =1, $fn = RndFrags);
 					} //union
 				// Internal cylinder cutout
-				cylinder(r= radius-.5, h = topHeight+3);
-				translate([-(diameter+2)/2,-notchW/2,-0.1])cube([diameter+2,notchW,topHeight+2.2]);//notch for insertion flex
+				cylinder(r= radius-.5, h = topHeight+3, $fn = RndFrags);
+				//notch for insertion flex
+				translate([-(diameter+2)/2,-notchW/2,-0.1])
+					cube([diameter+2,notchW,topHeight+2.2]);
 			} //difference
 	} else if (style == 3) { // flat - No top
 	} else if (style == 4) { // female
 		translate([0,0, baseHeight - topHeight/2 + 0.1])
-			cylinder(topHeight + 0.1, r = radius, $fn = 12, center = true);
+			cylinder(topHeight + 0.1, r = radius, $fn = RndFrags, center = true);
 	} else if (style == 5) { // hollow
 		translate([0,0, baseHeight/2])
-			cylinder(baseHeight + 0.1, r = radius, $fn = 50, center = true);
+			cylinder(baseHeight + 0.1, r = radius, $fn = RndFrags, center = true);
 	}
 };
 // Parameters: shape, height, diameter
@@ -91,7 +97,7 @@ module standoffBase(shape, height, diameter) {
 	radius = diameter/2;
 	if (shape == 1) { // round
 		translate([0, 0, height/2])
-			cylinder(height, r = radius, center = true, $fn = 50);
+			cylinder(height, r = radius, center = true, $fn = RndFrags);
 	} else if (shape == 2) { // square
 		translate([0,0, height/2])
 			cube([diameter, diameter, height], center = true);
@@ -124,6 +130,16 @@ StylesV = range2vector(Styles);
 if (Generate == 1) { // single
 	standoff(Shape,BaseHeight,BaseDia,Style,TopHeight,TopDia);
 } else if (Generate == 2) { // array all same
+	translate([-(X_Offset * (Rows+1))/2, -(Y_Offset * (Columns+1))/2, 0])
+		union(){
+			for (j = [1 : Rows]){
+				translate([0,j * Y_Offset,0])
+					for( i = [1 : Columns]){
+						translate([i * X_Offset,0,0])
+							standoff(Shape,BaseHeight,BaseDia,Style,TopHeight,TopDia);
+					} // for
+			} // for
+		}; // union
 } else if (Generate == 3) { // array Samples
 	translate([-(X_Offset * (len(StylesV)+1))/2, -(Y_Offset * (len(ShapesV)+1))/2, 0])
 		union(){
