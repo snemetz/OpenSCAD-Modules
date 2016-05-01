@@ -43,7 +43,7 @@ module mountHoles(locations, diameter = 2.8, depth = 5) {
 module mountPosts(locations, boardThick, postBase, postTop) {
   for (postPos = locations) {
     translate([postPos[0], postPos[1], boardThick])
-      standoff(postBase[0], postBase[1], postBase[2], postTop[0], postTop[2], postTop[3]);
+      standoff(postBase[0], postBase[1], postBase[2], postTop[0], postTop[1], postTop[2]);
   }
 }
 
@@ -131,7 +131,6 @@ plate = [112, 80, 1.5];
 image = "pine64";
 postBase = [1, 8, 5];
 postTop = [5, 5, 2];
-
 translate([-boardDim[0]/2,-boardDim[1]/2,0])
 pcbMountPlate(plate, boardDim, mountLocs, image, postBase, postTop);
 
