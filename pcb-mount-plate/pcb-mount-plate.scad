@@ -13,6 +13,7 @@
 //  improve current designs
 //  none of board data works. Figure out how to store in module
 //  plate may need some changes as case for it to mount into is designed
+//  add text to plate between posts and end of plate
 
 //CUSTOMIZER VARIABLES
 
@@ -28,6 +29,7 @@ use <designs.scad>;
 //		locations: vector of x,y vectors of hole locations
 //    diameter: size of the holes
 //		depth: the depth of the holes in mm
+// TODO: fix # of circle fragments
 module mountHoles(locations, diameter = 2.8, depth = 5) {
   for(holePos = locations) {
     translate([holePos[0], holePos[1], -depth/2+0.1]) cylinder(d=diameter, h=depth);
@@ -121,6 +123,13 @@ module pcbMountPlate(plateDim, boardDim, mountLocs, image, postBase, postTop) {
 }
 
 // Testing
+// Create sample STLs:
+//  many posts - w/ & w/o design
+//  without design
+
+// do lots posts
+//mountLocs = [[3.5, 3.5], [3.5, 12.5], [3.5, 22.5], [3.5, 32.5], [3.5, 42.5], [21.5, 3.5], [41.5, 3.5], [61.5, 3.5], [3.5, 52.5], [21.5, 52.5], [41.5, 52.5], [61.5, 52.5]];
+//mountLocs = [[3.5, 3.5], [3.5, 12.5], [3.5, 22.5], [3.5, 32.5],[3.5, 42.5], [21.5, 3.5], [41.5, 3.5], [61.5, 3.5], [3.5, 52.5], [21.5, 52.5], [41.5, 52.5], [61.5, 52.5], [13.5, 22.5], [23.5, 22.5], [33.5, 22.5], [43.5, 22.5],  [50,5],[50,15],[50,30],[50,45]];
 // RPi
 mountLocs = [[3.5, 3.5], [61.5, 3.5], [3.5, 52.5], [61.5, 52.5]];
 boardDim = [92, 60, 1.25];
