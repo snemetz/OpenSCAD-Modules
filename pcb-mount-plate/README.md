@@ -18,6 +18,7 @@ non-customizer version as it is likely to be more current.
 ### Design Notes
 
 Cutout designs were created by:
+
 1. Finding logo image on Internet
 2. Using Paint.net to convert image to black & white and manually modify to make printable
 3. Using Inkscape to trace image and convert to OpenSCAD code
