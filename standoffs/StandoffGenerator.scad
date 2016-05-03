@@ -19,6 +19,7 @@
 //	bottom styles: support all top styles - rotate 180 and translate top
 //	Look at adding features from http://www.thingiverse.com/thing:79944
 //		or original http://www.thingiverse.com/thing:44894
+//	threads for male & female
 
 //CUSTOMIZER VARIABLES
 

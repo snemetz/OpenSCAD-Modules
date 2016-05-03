@@ -53,9 +53,18 @@ module mountPosts(locations, boardThick, postBase, postTop) {
 //	Parameters
 //    image: name of design to get
 module design(image) {
-  if (image == "pine64") {design_pine64();
-  } else if (image == "rpi") {design_rpi();
-  } else if (image == "opi") {design_opi();
+  // no match = [[]] - len(search)[0] == 0
+  // match = undef
+  // len(search([image], )[0]) != 0
+  if (image == "Pine64") {design_pine64();
+  } else if (len(search([image], ["BPi", "BPiM1","BPiM2+"])[0]) != 0)
+   {design_bpi();
+  } else if (image == "odroid")
+   {design_odroid();
+  } else if (len(search([image], ["OPi","OPiOne","OPiPC","OPiPlus","OPi2","OPiPlus2"])[0]) != 0)
+   {design_opi();
+  } else if (len(search([image], ["RPi","RPi1B","RPi1B+","RPiZero","RPi1A+"])[0]) != 0)
+   {design_rpi();
   } else if (image == "parallella") {design_parallella();};
 }
 
@@ -66,13 +75,14 @@ module design(image) {
 //    boardThick: thickness of the mount plate board
 //    postDia: post diameter
 //    z: z offset
+// FIX: is max to furthest points instead of min
 module design_placed(image, locations, boardThick, postDia, z) {
   shrinkage = postDia/2;
   len_x = max_x(locations)-min_x(locations);
   len_y = max_y(locations)-min_y(locations);
   translate([len_x/2+shrinkage,len_y/2+shrinkage,z])
   resize([len_x-shrinkage,len_y-shrinkage,boardThick+1])
-    design(image);
+    rotate([0,0,90]) design(image);
 }
 
 // Create mount board
@@ -122,6 +132,90 @@ module pcbMountPlate(plateDim, boardDim, mountLocs, image, postBase, postTop) {
 
 }
 
+
+module knownBoard(name, postBase, postTop, design=true) {
+  // Get vector index for a board
+  // will return empty vector if not found
+  function findBoard(name,boards=boards) =
+   (len(boards[search([name], boards)[0]]) == 2) ?
+    search([boards[search([name], boards)[0]][1]], boards)[0] :
+     search([name], boards)[0];
+  // for generating selection list for customizer
+  function getBoards(boards=boards) = [ for (board = boards) board[0] ];
+  // known boards specs
+  boards = [
+    // [Name , [dim], [mount holePos]]
+    // [Alias, Name]
+    // ["name", [x,y,z],[[x,y],[x,y],[x,y],[x,y]]],
+    // ["name2", [x,y,z],[[x,y],[x,y],[x,y],[x,y]]],
+    // Ardunio
+    // Banana Pi
+    // Holes: Internal
+    // [91.5,60,],[[3,3],[3,57],[89,3],[89,52]]
+    ["BPiM1",  [92, 60, 1.25],[[3,3],[3,57],[89,3],[89,52]]],
+    ["BPiM1+", "BPiM1"],
+    ["BPiM2",  "BPiM1"],
+    ["BPiM3",  "BPiM1"],
+    ["BPiM2+", [65, 65, 1.25],[]],
+    // Beaglebone
+    // Jaguar boards
+    ["JaguarOne", [101.9, 64.5, 1.6],[]],
+    // ODROID
+    //OdroidC0
+    //["OdroidC1+", [85, 56, 1.25],[]], // same as C2
+  	["OdroidC2",  [85, 56, 1.25],[]],
+  	["OdroidXU4", [82, 58, 1.25],[]],
+    // Orange Pi
+    // Thick 1.5 ?
+    // Holes: Internal 3
+    ["OPiOne",   [69, 48, 1.25],[]],
+    ["OPiPC",    [85, 55, 1.25],[]],
+    ["OPiPlus",  [108, 60, 1.25],[]],
+    ["OPi2",     [93, 60, 1.25],[]],
+    ["OPiMini2","OPi2"],
+    ["OPiPlus2", [108, 67, 1.25],[]],
+    // Parallella
+    // https://github.com/parallella/parallella-hw
+    // Holes: Internal 0.125"
+    // 3.4" x 2.15" x .62" ?
+    //["Parallella", [],[]],
+    // Pine
+    // Holes: Internal 3
+    ["Pine64", [127, 79, 1.2],[[4.3,4.3],[4.3,75.2],[122.7,4.3],[122.7,75.2]]],
+    // Raspberry Pi
+    ["RPi1B",  	[85, 56, 1.25],[[80, 43.5], [25, 17.5]]],
+    // Holes: M2.5 - Internal 2.75, external 6.2
+    ["RPi1B+",  [85, 56, 1.25],[[3.5, 3.5], [61.5, 3.5], [3.5, 52.5], [61.5, 52.5]]],
+    ["RPi2B", "RPi1B+"],
+    ["RPi3B", "RPi1B+"],
+    ["RPiZero", [65, 30, 1.25],[[3.5, 3.5], [61.5, 3.5], [3.5, 26.5], [61.5, 26.5]]],
+    ["RPi1A+",  [65, 56, 1.25],[[3.5, 3.5], [61.5, 3.5], [3.5, 52.5], [61.5, 52.5]]]
+  ];
+
+  // generate mount plate
+  boardIndex = findBoard(name);
+  translate([-boards[boardIndex][1][0]/2,-boards[boardIndex][1][1]/2,0]) // this should be outside, but dim only known here
+  pcbMountPlate(plate, boards[boardIndex][1], boards[boardIndex][2],
+    (design) ? boards[boardIndex][0] : "", postBase, postTop);
+
+  // testing
+  echo("Func=:",findBoard(name));
+  echo(boards[boardIndex]);
+  echo("0 name=",boards[boardIndex][0]);
+  echo("1 dim =",boards[boardIndex][1]); // ok
+  echo("2 locs=",boards[boardIndex][2]); // ok
+}
+
+// Create an array of post mount (post) locations (for customizer)
+//	Parameters
+//    row_data: [rows, x_origin, x_offset]
+//    column_data: [columns, y_origin, y_offset]
+function mountPoints(row_data, column_data) = [
+  for (j = [1 : row_data[0]])
+    for( i = [1 : column_data[0]])
+      [(j-1) * row_data[2] + row_data[1], (i-1) * column_data[2] + column_data[1]]
+];
+
 // Testing
 // Create sample STLs:
 //  many posts - w/ & w/o design
@@ -130,95 +224,34 @@ module pcbMountPlate(plateDim, boardDim, mountLocs, image, postBase, postTop) {
 // do lots posts
 //mountLocs = [[3.5, 3.5], [3.5, 12.5], [3.5, 22.5], [3.5, 32.5], [3.5, 42.5], [21.5, 3.5], [41.5, 3.5], [61.5, 3.5], [3.5, 52.5], [21.5, 52.5], [41.5, 52.5], [61.5, 52.5]];
 //mountLocs = [[3.5, 3.5], [3.5, 12.5], [3.5, 22.5], [3.5, 32.5],[3.5, 42.5], [21.5, 3.5], [41.5, 3.5], [61.5, 3.5], [3.5, 52.5], [21.5, 52.5], [41.5, 52.5], [61.5, 52.5], [13.5, 22.5], [23.5, 22.5], [33.5, 22.5], [43.5, 22.5],  [50,5],[50,15],[50,30],[50,45]];
+
+//mountLocs = mountPoints([9, 3.5, 13], [8, 3.5, 10]);
+//boardDim = [110, 78, 1.25];
+//plate = [112, 80, 1.5];
+
 // RPi
 mountLocs = [[3.5, 3.5], [61.5, 3.5], [3.5, 52.5], [61.5, 52.5]];
 boardDim = [92, 60, 1.25];
 plate = [112, 80, 1.5];
-// image = "rpi";
+// image = "Rpi";
 // image = "opi";
+// image = "bpi";
+// image = "odroid";
 // image = "parallella";
-image = "pine64";
+image = "Pine64";
+board = "Pine64";
 postBase = [1, 8, 5];
 postTop = [5, 5, 2];
-translate([-boardDim[0]/2,-boardDim[1]/2,0])
-pcbMountPlate(plate, boardDim, mountLocs, image, postBase, postTop);
+//translate([-boardDim[0]/2,-boardDim[1]/2,0])
+//pcbMountPlate(plate, boardDim, mountLocs, image, postBase, postTop);
+
+knownBoard(board, postBase, postTop, design=true);
 
 // END
 
-// beyond here i sboard data
-// still figuring out how to get this into module in a usable and maintainable way
-
-boards = [
- // Name , dim, mount holePos
- // Alias, Name
-// ["name", [x,y,z],[[x,y],[x,y],[x,y],[x,y]]],
-// ["name2", [x,y,z],[[x,y],[x,y],[x,y],[x,y]]],
- ["name3","name2"],
- ["RPi1B+",[85, 56, 1.25],[[3.5, 3.5], [61.5, 3.5], [3.5, 52.5], [61.5, 52.5]]],
- ["RPi2B", "RPi1B+"],
- ["RPi3B", "RPi1B+"],
- ];
-// May not work
-/*
-function dim (name="RPi3B") = (
-	// Can't have for here ?
-  for (board = boards) {
-    if (len(board) == 2) {find = board[1]}
-		else {find = board[0]}
-		if (find == name) { dims = board[1] }
-	}
-	dims
-)
-*/
-// echo(dim());
-
-// Sample part for test fitting
-//translate([-7.5,-7.5,0])cube([15,15,1]);
-//translate([0,0,1])boardmount(HoleD = 2.7, BoardThick = 1.70, lift=5);
-
-//get vector of [x,y] vectors of locations of mounting holes based on Pi version
-function HoleLocations (board="3B") =
-	(board=="1A+" || board=="1B+" || board=="2B" || board=="3B") ?
-		[[3.5, 3.5], [61.5, 3.5], [3.5, 52.5], [61.5, 52.5]] : //pi 1B+, 2B, 3B
-	(board=="Zero") ?
-		[[3.5, 3.5], [61.5, 3.5], [3.5, 26.5], [61.5, 26.5]] : //pi zero
-	(board=="1B") ?
-		[[80, 43.5], [25, 17.5]] :
-	[]; //invalid board
-
-// get vector of [x,y,z] dimensions of board
-//  dimensions are for PCB only, not ports or anything else
-function boardDim (board="RPi3B") =
-  // Banana Pi
-	(board == "BPiM1" || board == "BPiM1+" || board == "BPiM2" || board == "BPiM3") ?
-	  [92, 60, 1.25] :
-  (board == "BPiM2+") ?
-    [65, 65, 1.25] :
-	(board == "JaguarOne") ?
-	  [101.9, 64.5, 1.6] :
-	// Orange Pi
-	(board == "OPiOne") ?
-	  [69, 48, 1.25] :
-	(board == "OPiPC") ?
-	  [85, 55, 1.25] :
-	(board == "OPiPlus") ?
-	  [108, 60, 1.25] :
-	(board == "OPi2" || board == "OPiMini2") ?
-	  [93, 60, 1.25] :
-	(board == "OPiPlus2") ?
-	  [108, 67, 1.25] :
-	// ODROID
-	(board == "OdroidC2") ?
-	  [85, 56, 1.25] :
-	(board == "OdroidXU4") ?
-	  [82, 58, 1.25] :
-	(board == "Pine64") ?
-	  [127, 79, 1.25] :
-	// Raspberry Pi
-	(board == "RPi1B" || board=="RPi1B+" || board=="RPi2B" || board=="RPi3B") ?
-		[85, 56, 1.25] :
-	(board == "RPiZero") ?
-		[65, 30, 1.25] :
-	(board == "RPi1A+") ?
-		[65, 56, 1.25] :
-	[0,0,0];  // Unknown board
+/*function flatten(l) = [ for (a = l) for (b = a) b ];
+function dim (name="RPi3B") = [ // use search instead ?? yes
+  // Can't have any {} or =
+  for (board = boards)
+    (board[0] == name) ? board[1] : []
+]; */
