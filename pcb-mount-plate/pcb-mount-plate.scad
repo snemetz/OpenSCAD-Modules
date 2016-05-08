@@ -1,14 +1,19 @@
-// Mount Plate Module
+/*
+**
+** Mount Plate Module
+**
+*/
 //
 // Author: Steven Nemetz
 //
-// Current version: https://github.com/snemetz/OpenSCAD-Modules/tree/master/pcb-mount-plate
-// TODO: Customizable: http://www.thingiverse.com/thing:
+// Current version GitHub: https://github.com/snemetz/OpenSCAD-Modules/tree/master/pcb-mount-plate
+// Thingiverse Customizable: http://www.thingiverse.com/thing:1533164
 /*
-	REVISION HISTORY
-  v0.3 Add customizer code
+  REVISION HISTORY
+  v0.4 Add support for Rack case
+  v0.3 Add initial customizer code
   v0.2 Add known boards and a bunch of other work
-	v0.1 Initial working version
+  v0.1 Initial working version
 */
 // TODO: Future Feature Ideas
 //	add more designs
@@ -16,6 +21,9 @@
 //  plate may need some changes as case for it to mount into is designed
 //  add text to plate between posts and end of plate
 //  fix design resizing so work with non 4 post specs
+//  add grid design - programaticly
+//  add HD mounts w/ known drives and custom
+//    3.5", 2.5" multiple heights
 
 //CUSTOMIZER VARIABLES
 
@@ -78,11 +86,17 @@ module design(image) {
 //    postDia: post diameter
 //    z: z offset
 // FIX: is max size to furthest points instead of min
+// Shrinkage not working right
+// translate is a little off- without shrinkage a bit better? test more
+// not for all designs - need beter way to cal translation
+// start over at calc of x & y length
+// then place based on image size (lengths) and post locations
+//    make sure it is centered between posts
 module design_placed(image, locations, boardThick, postDia, z) {
-  shrinkage = postDia/2;
+  shrinkage = postDia + postDia/2;
   len_x = max_x(locations)-min_x(locations);
   len_y = max_y(locations)-min_y(locations);
-  translate([len_x/2+shrinkage,len_y/2+shrinkage,z])
+  translate([len_x/2+shrinkage/2,len_y/2+shrinkage/2,z])
   resize([len_x-shrinkage,len_y-shrinkage,boardThick+1])
     rotate([0,0,90]) design(image);
 }
@@ -113,15 +127,22 @@ module board(dimensions, locations, postBase, postTop) {
 //    image: design to put in plate
 //		postBase: [shape, baseHeight, baseDiameter]
 //    postTop: [style, topHeight, topDiameter]
-module pcbMountPlate(plateDim, boardDim, mountLocs, image, postBase, postTop) {
+//    placement: board location: center (default), rack (center back)
+module pcbMountPlate(plateDim, boardDim, mountLocs, image, postBase, postTop, placement) {
+  translateY = (placement == "Rack") ? 0 : -(plateDim[0] - boardDim[0])/2;
   diff = plateDim[2] - boardDim[2];
   difference () {
     union() {
-      translate ([-(plateDim[0] - boardDim[0])/2,-(plateDim[1]-boardDim[1])/2,-diff])
+      translate ([translateY,-(plateDim[1]-boardDim[1])/2,-diff])
         cube(plateDim);
-      board(boardDim,mountLocs, postBase, postTop);
+      translate([boardDim[0],boardDim[1],0])
+        rotate([0,0,180])
+        board(boardDim,mountLocs, postBase, postTop);
     };
-    design_placed(image, mountLocs, plateDim[2]*2, postBase[1], -diff-0.1);
+    //translate([boardDim[0],boardDim[1],0])
+    translate([boardDim[0]-max_x(mountLocs),0,0]) // mount to board end
+      //rotate([0,0,180])
+        design_placed(image, mountLocs, plateDim[2]*2, postBase[2], -diff-0.1);
     if (postTop[0] == 5) { // hollow
       mountHoles(mountLocs, postTop[2], plateDim[2]*2);
     };
@@ -129,7 +150,8 @@ module pcbMountPlate(plateDim, boardDim, mountLocs, image, postBase, postTop) {
 }
 
 //
-module knownBoard(name, plate, postBase, postTop, design=true) {
+//    placement: board location
+module knownBoard(name, plate, postBase, postTop, design=true, placement) {
   // Get vector index for a board
   // will return empty vector if not found
   //	Parameters
@@ -143,75 +165,85 @@ module knownBoard(name, plate, postBase, postTop, design=true) {
   // for generating selection list for customizer
   function getBoards(boards=boards) = [ for (board = boards) board[0] ];
 
-  // known boards specs
+  // Known boards specs
   boards = [
-    // [Name , [dim], [mount holePos]]
+    // [Name , [board dim], [hole dim] [mount holePos]]
+    // ["name", [x,y,z], [int, ext], [[x,y],[x,y],[x,y],[x,y]]],
     // [Alias, Name]
-    // ["name", [x,y,z],[[x,y],[x,y],[x,y],[x,y]]],
-    // ["name2", [x,y,z],[[x,y],[x,y],[x,y],[x,y]]],
-    // TODO:
-    //  add mount hole size ? internal = top dia, external = base dia
     // Ardunio
     // Banana Pi
-    // Holes: Internal
-    // [91.5,60,],[[3,3],[3,57],[89,3],[89,52]]
-    ["BPiM1",  [92, 60, 1.25],[[3,3],[3,57],[89,3],[89,52]]],
+    ["BPiM1",  [92, 60, 1.15], [3,5.2], [[3,3],[3,57],[89,3],[89,52]]],
     ["BPiM1+", "BPiM1"],
+    // M2 has 2 additional mount holes: [18.2,16.8],[76.75,28.35]
     ["BPiM2",  "BPiM1"],
     ["BPiM3",  "BPiM1"],
-    ["BPiM2+", [65, 65, 1.25],[]],
+    ["BPiM2+", [65, 65, 1.25], [], []],
     // Beaglebone
     // Jaguar boards
-    ["JaguarOne", [101.9, 64.5, 1.6],[]],
+    ["JaguarOne", [102, 73.75, 1.6], [3,3.7], [[2.35,2.35],[2.35,99.85],[71.25,2.35],[71.25,99.85]]],
     // ODROID
     //OdroidC0
     //["OdroidC1+", [85, 56, 1.25],[]], // same as C2
-  	["OdroidC2",  [85, 56, 1.25],[]],
-  	["OdroidXU4", [82, 58, 1.25],[]],
+  	["OdroidC2",  [85, 56, 1.25], [], []],
+  	["OdroidXU4", [82, 58, 1.25], [], []],
     // Orange Pi
     // Thick 1.5 ?
     // Holes: Internal 3
-    ["OPiOne",   [69, 48, 1.25],[]],
-    ["OPiPC",    [85, 55, 1.25],[]],
-    ["OPiPlus",  [108, 60, 1.25],[]],
-    ["OPi2",     [93, 60, 1.25],[]],
+    ["OPiOne",   [69, 48, 1.25], [], []],
+    ["OPiPC",    [85, 55, 1.25], [], []],
+    ["OPiPlus",  [108, 60, 1.25], [], []],
+    ["OPi2",     [93, 60, 1.25], [], []],
     ["OPiMini2","OPi2"],
-    ["OPiPlus2", [108, 67, 1.25],[]],
+    ["OPiPlus2", [108, 67, 1.25], [], []],
     // Parallella
     // https://github.com/parallella/parallella-hw
     // Holes: Internal 0.125" = 3.175
     // 3.4" x 2.15" x .62" = 86.36, 54.61, 15.748
-    //["Parallella", [],[]],
+    ["Parallella", [86.36, 54.61, 1.25], [3,4], []],
     // Pine
-    // Holes: Internal 3
-    ["Pine64", [127, 79, 1.2],[[4.3,4.3],[4.3,75.2],[122.7,4.3],[122.7,75.2]]],
+    ["Pine64", [127, 79.45, 1.2], [3,7], [[4.3,4.3],[4.3,75.2],[122.7,4.3],[122.7,75.2]]],
     // Raspberry Pi
-    ["RPi1B",  	[85, 56, 1.25],[[80, 43.5], [25, 17.5]]],
-    // Holes: M2.5 - Internal 2.75, external 6.2
-    ["RPi1B+",  [85, 56, 1.25],[[3.5, 3.5], [61.5, 3.5], [3.5, 52.5], [61.5, 52.5]]],
+    ["RPi1B",  	[85, 56, 1.25], [], [[80, 43.5], [25, 17.5]]],
+    ["RPi1B+",  [85, 56, 1.25], [2.75, 6.2], [[3.5, 3.5], [61.5, 3.5], [3.5, 52.5], [61.5, 52.5]]],
     ["RPi2B", "RPi1B+"],
     ["RPi3B", "RPi1B+"],
-    ["RPiZero", [65, 30, 1.25],[[3.5, 3.5], [61.5, 3.5], [3.5, 26.5], [61.5, 26.5]]],
-    ["RPi1A+",  [65, 56, 1.25],[[3.5, 3.5], [61.5, 3.5], [3.5, 52.5], [61.5, 52.5]]]
+    ["RPiZero", [65, 30, 1.25], [], [[3.5, 3.5], [61.5, 3.5], [3.5, 26.5], [61.5, 26.5]]],
+    ["RPi1A+",  [65, 56, 1.25], [], [[3.5, 3.5], [61.5, 3.5], [3.5, 52.5], [61.5, 52.5]]]
   ];
 
+  // Defaults
+  holeInt = 3;
+  holeExt = 6;
+
   // TODO:
-  //  Use mount hole data in board data instead of data (diameters) from postBase & postTop
-  //  Use board thinkness for top height if Snap-In ?
-  //  Add base height to board data for custom min ?
+  //    hole internal dia * 0.92 = top diameter - Can make a bit larger
+  // Snap in shape could be better. Needs to insert better - more conic
+
+  boardIndex = findBoard(name);
+  // Customize standoffs with board data
+  customTopHeight = (postTop[0] == 2) ?
+    boards[boardIndex][1][2] : postTop[1];
+  customPostBase = (len(boards[boardIndex][2]) == 2) ?
+    [postBase[0], postBase[1], boards[boardIndex][2][1]] :
+    [postBase[0], postBase[1], holeExt];
+  customPostTop  = (len(boards[boardIndex][2]) == 2) ?
+    // calibrate for male. Snapin might need to be smaller
+    // Should tolerance be % (97) or fixed # (.0825)?
+    [postTop[0],  customTopHeight,  boards[boardIndex][2][0] * 0.97] :
+    [postTop[0],  customTopHeight,  holeInt];
 
   // generate mount plate
-  boardIndex = findBoard(name);
   translate([-boards[boardIndex][1][0]/2,-boards[boardIndex][1][1]/2,0]) // this should be outside, but dim only known here
-  pcbMountPlate(plate, boards[boardIndex][1], boards[boardIndex][2],
-    (design) ? boards[boardIndex][0] : "", postBase, postTop);
+  pcbMountPlate(plate, boards[boardIndex][1], boards[boardIndex][3],
+    (design) ? boards[boardIndex][0] : "", customPostBase, customPostTop, placement);
 
   /*// testing
   echo("Func=:",findBoard(name));
   echo(boards[boardIndex]);
   echo("0 name=",boards[boardIndex][0]);
   echo("1 dim =",boards[boardIndex][1]); // ok
-  echo("2 locs=",boards[boardIndex][2]); // ok
+  echo("2 holes =",boards[boardIndex][2]); // ok
+  echo("3 locs=",boards[boardIndex][3]); // ok
   echo(getBoards(boards));
   */
 }
@@ -226,11 +258,20 @@ function mountPoints(row_data, column_data) = [
       [(j-1) * row_data[2] + row_data[1], (i-1) * column_data[2] + column_data[1]]
 ];
 
-// END library
+/*
+**
+** END Mount Plate Module
+**
+*/
+
 // ["BPiM1", "BPiM1+", "BPiM2", "BPiM3", "BPiM2+", "JaguarOne", "OdroidC2", "OdroidXU4", "OPiOne", "OPiPC", "OPiPlus", "OPi2", "OPiMini2", "OPiPlus2", "Pine64", "RPi1B", "RPi1B+", RPi2B, RPi3B, "RPiZero", "RPi1A+"]
-// Start Thingiverse Customizer code
+
+// START Thingiverse Customizer code
+
 // Create mounting plate for:
-BoardName    = "RPi3B"; // [Custom]
+BoardName    = "RPi3B"; // [Custom, Custom-4Post, Custom-Array, Pine64, RPi1B, RPi1B+, RPi2B, RPi3B, RPiZero, RPi1A+]
+// Bord locations
+Placement = "Rack"; // [Center, Rack]
 // Cutout design in mounting plate for known board
 Design       = true; // [true, false]
 /* [Mounting Plate Dimensions] */
@@ -240,12 +281,12 @@ PlateZ = 1.5;
 /* [Standoffs Base] */
 //Choose shape of the main body
 BaseShape    = 3; // [1:Round, 2:Square, 3:Hex]
-BaseHeight   = 8;
+BaseHeight   = 6;
 BaseDiameter = 5;
 /* [Standoffs Top] */
 //Choose style of the top section
-TopStyle     = 2; // [1:Male, 2:Snap-In, 3:Flat, 4:Female, 5:Hollow]
-TopHeight    = 5;
+TopStyle     = 1; // [1:Male, 2:Snap-In, 3:Flat, 4:Female, 5:Hollow]
+TopHeight    = 6;
 TopDiameter  = 2;
 /* [PCB Board Dimensions] */
 BoardX = 92;
@@ -260,30 +301,49 @@ OffsetX = 13;
 Columns = 7;
 OriginY = 3.5;
 OffsetY = 10;
+/* [Standoffs 4 mounts] */
+Mount1X = 3.5;
+Mount1Y = 3.5;
+Mount2X = 3.5;
+Mount2Y = 52.5;
+Mount3X = 61.5;
+Mount3Y = 3.5;
+Mount4X = 61.5;
+Mount4Y = 52.5;
 
 /* [Hidden] */
-postBase = [BaseShape, BaseHeight, BaseDiameter];
-postTop  = [TopStyle,  TopHeight,  TopDiameter];
-plateDim = [PlateX, PlateY, PlateZ];
-boardDim = [BoardX, BoardY, BoardZ];
-arrayX   = [Rows, OriginX, OffsetX];
-arrayY   = [Columns, OriginY, OffsetY];
+PostBase = [BaseShape, (Placement == "Rack") ? 5 : BaseHeight, BaseDiameter];
+PostTop  = [TopStyle,  TopHeight,  TopDiameter];
+PlateDim = [PlateX, PlateY, PlateZ];
+BoardDim = [BoardX, BoardY, BoardZ];
 
-// Support: known, custom (4 posts), custom array
-if (BoardName != "Custom") {
-  knownBoard(BoardName, plateDim, postBase, postTop, design=Design);
-} else { // array
+// END Thingiverse Customizer data
+
+// Start Thingiverse Customizer code
+
+//search("Custom","Custom-Array") returns [0,1,2,3,4,5]
+// if len of string == len of match array
+// This matchs the characters not the substring. So need to be careful with names used
+// if (len("Custom") == len(search("Custom",BoardName)))
+// Custom-Array, Custom-4Post
+if (len("Custom") != len(search("Custom",BoardName))) { // Known board
+  knownBoard(BoardName, PlateDim, PostBase, PostTop, Design, Placement);
+} else if (BoardName == "Custom-4Post") { // 4 Standoffs mounts
+  mountLocs = [[Mount1X,Mount1Y],[Mount2X,Mount2Y],[Mount3X,Mount3Y],[Mount4X,Mount4Y]];
+  translate([-BoardDim[0]/2,-BoardDim[1]/2,0])
+    pcbMountPlate(PlateDim, BoardDim, mountLocs, Image, PostBase, PostTop, Placement);
+} else if (BoardName == "Custom-Array") { // array
+  arrayX   = [Rows, OriginX, OffsetX];
+  arrayY   = [Columns, OriginY, OffsetY];
   mountLocs = mountPoints(arrayX, arrayY);
-  translate([-boardDim[0]/2,-boardDim[1]/2,0])
-  pcbMountPlate(plateDim, boardDim, mountLocs, Image, postBase, postTop);
+  translate([-BoardDim[0]/2,-BoardDim[1]/2,0])
+    pcbMountPlate(PlateDim, BoardDim, mountLocs, Image, PostBase, PostTop, Placement);
 }
 
 // END Customizer code
+// END
 
 // Testing
-// Create sample STLs:
-//  many posts - w/ & w/o design
-//  without design
 
 // do lots posts
 //mountLocs = [[3.5, 3.5], [3.5, 12.5], [3.5, 22.5], [3.5, 32.5], [3.5, 42.5], [21.5, 3.5], [41.5, 3.5], [61.5, 3.5], [3.5, 52.5], [21.5, 52.5], [41.5, 52.5], [61.5, 52.5]];
@@ -311,6 +371,5 @@ postTop = [5, 5, 2];
 
 knownBoard(board, plate, postBase, postTop, design=true);
 */
-// END
 
 // function flatten(l) = [ for (a = l) for (b = a) b ];
