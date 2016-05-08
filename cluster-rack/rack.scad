@@ -7,8 +7,8 @@
 //
 // Author: Steven Nemetz
 //
-// Current version GitHub: https://github.com/snemetz/OpenSCAD-Modules/tree/master/
-// Thingiverse Customizable: http://www.thingiverse.com/thing:
+// Current version GitHub: https://github.com/snemetz/OpenSCAD-Modules/tree/master/cluster-rack
+// Thingiverse Customizable: http://www.thingiverse.com/thing:1538381
 /*
   REVISION HISTORY
   v0.1 Initial working version

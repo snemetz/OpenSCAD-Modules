@@ -25,11 +25,67 @@
 //  add HD mounts w/ known drives and custom
 //    3.5", 2.5" multiple heights
 
-//CUSTOMIZER VARIABLES
+// ["BPiM1", "BPiM1+", "BPiM2", "BPiM3", "BPiM2+", "JaguarOne", "OdroidC2", "OdroidXU4", "OPiOne", "OPiPC", "OPiPlus", "OPi2", "OPiMini2", "OPiPlus2", "Pine64", "RPi1B", "RPi1B+", RPi2B, RPi3B, "RPiZero", "RPi1A+"]
 
-//CUSTOMIZER VARIABLES END
+// START Thingiverse Customizer code
+
+// Create mounting plate for:
+BoardName    = "RPi3B"; // [Custom, Custom-4Post, Custom-Array, BPiM1, BPiM1+, BPiM2, BPiM3, JaguarOne, Pine64, RPi1B, RPi1B+, RPi2B, RPi3B, RPiZero, RPi1A+]
+// Board locations
+Placement = "Rack"; // [Center, Rack]
+// Cutout design in mounting plate for known board
+Design       = true; // [true, false]
+/* [Mounting Plate Dimensions] */
+// Length
+PlateX = 112;
+// Width
+PlateY = 80;
+// Thickness
+PlateZ = 1.5;
+/* [Standoffs Base] */
+// Choose shape of the main body
+BaseShape    = 3; // [1:Round, 2:Square, 3:Hex]
+BaseHeight   = 6;
+BaseDiameter = 5;
+/* [Standoffs Top] */
+// Choose style of the top section
+TopStyle     = 1; // [1:Male, 2:Snap-In, 3:Flat, 4:Female, 5:Hollow]
+TopHeight    = 6;
+TopDiameter  = 2;
+/* [PCB Board Dimensions] */
+// Length
+BoardX = 92;
+// Width
+BoardY = 60;
+// Thickness
+BoardZ = 1.25;
+/* [Cutout Design] */
+// Select cutout design for custom
+Image  = "RPi"; // [BPi:Banana Pi, Odroid, OPi:Orange Pi, Parallella, Pine64, RPi:Raspberry Pi]
+/* [Custom Array Standoffs] */
+Rows    = 8;
+OriginX = 3.5;
+OffsetX = 13;
+Columns = 7;
+OriginY = 3.5;
+OffsetY = 10;
+/* [Custom 4 Posts Standoffs] */
+Mount1X = 3.5;
+Mount1Y = 3.5;
+Mount2X = 3.5;
+Mount2Y = 52.5;
+Mount3X = 61.5;
+Mount3Y = 3.5;
+Mount4X = 61.5;
+Mount4Y = 52.5;
 
 /* [Hidden] */
+PostBase = [BaseShape, (Placement == "Rack") ? 5 : BaseHeight, BaseDiameter];
+PostTop  = [TopStyle,  TopHeight,  TopDiameter];
+PlateDim = [PlateX, PlateY, PlateZ];
+BoardDim = [BoardX, BoardY, BoardZ];
+
+// END Thingiverse Customizer data
 
 use <../standoffs/StandoffGenerator.scad>;
 use <designs.scad>;
@@ -264,61 +320,6 @@ function mountPoints(row_data, column_data) = [
 **
 */
 
-// ["BPiM1", "BPiM1+", "BPiM2", "BPiM3", "BPiM2+", "JaguarOne", "OdroidC2", "OdroidXU4", "OPiOne", "OPiPC", "OPiPlus", "OPi2", "OPiMini2", "OPiPlus2", "Pine64", "RPi1B", "RPi1B+", RPi2B, RPi3B, "RPiZero", "RPi1A+"]
-
-// START Thingiverse Customizer code
-
-// Create mounting plate for:
-BoardName    = "RPi3B"; // [Custom, Custom-4Post, Custom-Array, Pine64, RPi1B, RPi1B+, RPi2B, RPi3B, RPiZero, RPi1A+]
-// Bord locations
-Placement = "Rack"; // [Center, Rack]
-// Cutout design in mounting plate for known board
-Design       = true; // [true, false]
-/* [Mounting Plate Dimensions] */
-PlateX = 112;
-PlateY = 80;
-PlateZ = 1.5;
-/* [Standoffs Base] */
-//Choose shape of the main body
-BaseShape    = 3; // [1:Round, 2:Square, 3:Hex]
-BaseHeight   = 6;
-BaseDiameter = 5;
-/* [Standoffs Top] */
-//Choose style of the top section
-TopStyle     = 1; // [1:Male, 2:Snap-In, 3:Flat, 4:Female, 5:Hollow]
-TopHeight    = 6;
-TopDiameter  = 2;
-/* [PCB Board Dimensions] */
-BoardX = 92;
-BoardY = 60;
-BoardZ = 1.25;
-/* [Cutout Design] */
-Image  = "RPi"; // [BPi:Banana Pi, Odroid, OPi:Orange Pi, Parallella, Pine64, RPi:Raspberry Pi]
-/* [Standoffs Array] */
-Rows    = 8;
-OriginX = 3.5;
-OffsetX = 13;
-Columns = 7;
-OriginY = 3.5;
-OffsetY = 10;
-/* [Standoffs 4 mounts] */
-Mount1X = 3.5;
-Mount1Y = 3.5;
-Mount2X = 3.5;
-Mount2Y = 52.5;
-Mount3X = 61.5;
-Mount3Y = 3.5;
-Mount4X = 61.5;
-Mount4Y = 52.5;
-
-/* [Hidden] */
-PostBase = [BaseShape, (Placement == "Rack") ? 5 : BaseHeight, BaseDiameter];
-PostTop  = [TopStyle,  TopHeight,  TopDiameter];
-PlateDim = [PlateX, PlateY, PlateZ];
-BoardDim = [BoardX, BoardY, BoardZ];
-
-// END Thingiverse Customizer data
-
 // Start Thingiverse Customizer code
 
 //search("Custom","Custom-Array") returns [0,1,2,3,4,5]
@@ -373,3 +374,6 @@ knownBoard(board, plate, postBase, postTop, design=true);
 */
 
 // function flatten(l) = [ for (a = l) for (b = a) b ];
+
+
+// Add libaries for customizer here
