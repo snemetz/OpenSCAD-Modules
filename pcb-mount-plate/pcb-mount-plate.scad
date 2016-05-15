@@ -24,7 +24,10 @@
 //  add grid design - programaticly
 //  add HD mounts w/ known drives and custom
 //    3.5", 2.5" multiple heights
-
+//  Storage drawers: full box, edges on front to cover rack, cutout in slide for lock clip
+//    Open: top, left, right
+//    Options: hole for nobe, raised label, sliding lid
+//  Design BPi: triangle - thicker dashes further apart
 // ["BPiM1", "BPiM1+", "BPiM2", "BPiM3", "BPiM2+", "JaguarOne", "OdroidC2", "OdroidXU4", "OPiOne", "OPiPC", "OPiPlus", "OPi2", "OPiMini2", "OPiPlus2", "Pine64", "RPi1B", "RPi1B+", RPi2B, RPi3B, "RPiZero", "RPi1A+"]
 
 // START Thingiverse Customizer code
@@ -62,6 +65,8 @@ BoardZ = 1.25;
 /* [Cutout Design] */
 // Select cutout design for custom
 Image  = "RPi"; // [BPi:Banana Pi, Odroid, OPi:Orange Pi, Parallella, Pine64, RPi:Raspberry Pi]
+// Label Text
+Label  = "";
 /* [Custom Array Standoffs] */
 Rows    = 8;
 OriginX = 3.5;
@@ -142,6 +147,7 @@ module design(image) {
 //    postDia: post diameter
 //    z: z offset
 // FIX: is max size to furthest points instead of min
+//  BPi hits post
 // Shrinkage not working right
 // translate is a little off- without shrinkage a bit better? test more
 // not for all designs - need beter way to cal translation
@@ -152,7 +158,7 @@ module design_placed(image, locations, boardThick, postDia, z) {
   shrinkage = postDia + postDia/2;
   len_x = max_x(locations)-min_x(locations);
   len_y = max_y(locations)-min_y(locations);
-  translate([len_x/2+shrinkage/2,len_y/2+shrinkage/2,z])
+  translate([len_x/2,len_y/2,z])
   resize([len_x-shrinkage,len_y-shrinkage,boardThick+1])
     rotate([0,0,90]) design(image);
 }
@@ -175,6 +181,16 @@ module board(dimensions, locations, postBase, postTop) {
     }
 }
 
+// use write libary because available in customizer or text()
+// https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Text
+// text("Help", size="10", font="Lobster Two");
+//translate([0,0,10]) scale([1,1,20])
+//text("Help", size="10", font="Liberation Sans:Style=Bold");
+// Can do vertical & horizontal alignment, char spacing,
+module label(txt) {
+  text(txt, size="10", font="Liberation Sans:Style=Bold");
+}
+
 // Create mount plate
 //	Parameters
 //    plateDim: plate dimensions
@@ -184,21 +200,35 @@ module board(dimensions, locations, postBase, postTop) {
 //		postBase: [shape, baseHeight, baseDiameter]
 //    postTop: [style, topHeight, topDiameter]
 //    placement: board location: center (default), rack (center back)
-module pcbMountPlate(plateDim, boardDim, mountLocs, image, postBase, postTop, placement) {
+module pcbMountPlate(plateDim, boardDim, mountLocs, rotateZ, image, postBase, postTop, placement, labelText) {
   translateY = (placement == "Rack") ? 0 : -(plateDim[0] - boardDim[0])/2;
   diff = plateDim[2] - boardDim[2];
   difference () {
     union() {
       translate ([translateY,-(plateDim[1]-boardDim[1])/2,-diff])
         cube(plateDim);
-      translate([boardDim[0],boardDim[1],0])
-        rotate([0,0,180])
+      if (rotateZ == 180 ) {
+        translate([boardDim[0],boardDim[1],0])
+        rotate([0,0,rotateZ])
         board(boardDim,mountLocs, postBase, postTop);
+      }
+      else {
+        board(boardDim,mountLocs, postBase, postTop);
+      }
     };
+    // Cutout design
     //translate([boardDim[0],boardDim[1],0])
     translate([boardDim[0]-max_x(mountLocs),0,0]) // mount to board end
       //rotate([0,0,180])
         design_placed(image, mountLocs, plateDim[2]*2, postBase[2], -diff-0.1);
+    // Cutout label
+    translate([boardDim[0]+(plateDim[0]-boardDim[0]+postBase[2])/2,
+            (plateDim[1] - boardDim[1])/4, -plateDim[2]/2])
+      rotate([0,0,90])
+        linear_extrude(plateDim[2]*2)
+          resize([max_y(mountLocs)-min_y(mountLocs)-postBase[2],
+                (plateDim[1] - boardDim[1])/2, 1])
+            label(labelText);
     if (postTop[0] == 5) { // hollow
       mountHoles(mountLocs, postTop[2], plateDim[2]*2);
     };
@@ -222,49 +252,52 @@ module knownBoard(name, plate, postBase, postTop, design=true, placement) {
   function getBoards(boards=boards) = [ for (board = boards) board[0] ];
 
   // Known boards specs
+  // TODO: add rotation
   boards = [
-    // [Name , [board dim], [hole dim] [mount holePos]]
-    // ["name", [x,y,z], [int, ext], [[x,y],[x,y],[x,y],[x,y]]],
+    // [Name , rotation, [board dim], [hole dim] [mount holePos]]
+    // ["name", 0, [x,y,z], [int, ext], [[x,y],[x,y],[x,y],[x,y]]],
     // [Alias, Name]
     // Ardunio
     // Banana Pi
-    ["BPiM1",  [92, 60, 1.15], [3,5.2], [[3,3],[3,57],[89,3],[89,52]]],
+    // TESTED
+    ["BPiM1",  0, [92, 60, 1.15], [3,5.2], [[3,3],[3,57],[89,3],[89,52]]],
     ["BPiM1+", "BPiM1"],
     // M2 has 2 additional mount holes: [18.2,16.8],[76.75,28.35]
     ["BPiM2",  "BPiM1"],
     ["BPiM3",  "BPiM1"],
-    ["BPiM2+", [65, 65, 1.25], [], []],
+    ["BPiM2+", 0, [65, 65, 1.25], [], []],
     // Beaglebone
     // Jaguar boards
-    ["JaguarOne", [102, 73.75, 1.6], [3,3.7], [[2.35,2.35],[2.35,99.85],[71.25,2.35],[71.25,99.85]]],
+    ["JaguarOne", 0, [102, 73.75, 1.6], [3,3.7], [[2.35,2.35],[2.35,99.85],[71.25,2.35],[71.25,99.85]]],
     // ODROID
     //OdroidC0
     //["OdroidC1+", [85, 56, 1.25],[]], // same as C2
-  	["OdroidC2",  [85, 56, 1.25], [], []],
-  	["OdroidXU4", [82, 58, 1.25], [], []],
+  	["OdroidC2",  0, [85, 56, 1.25], [], []],
+  	["OdroidXU4", 0, [82, 58, 1.25], [], []],
     // Orange Pi
     // Thick 1.5 ?
     // Holes: Internal 3
-    ["OPiOne",   [69, 48, 1.25], [], []],
-    ["OPiPC",    [85, 55, 1.25], [], []],
-    ["OPiPlus",  [108, 60, 1.25], [], []],
-    ["OPi2",     [93, 60, 1.25], [], []],
+    ["OPiOne",   0, [69, 48, 1.25], [], []],
+    ["OPiPC",    0, [85, 55, 1.25], [], []],
+    ["OPiPlus",  0, [108, 60, 1.25], [], []],
+    ["OPi2",     0, [93, 60, 1.25], [], []],
     ["OPiMini2","OPi2"],
-    ["OPiPlus2", [108, 67, 1.25], [], []],
+    ["OPiPlus2", 0, [108, 67, 1.25], [], []],
     // Parallella
     // https://github.com/parallella/parallella-hw
     // Holes: Internal 0.125" = 3.175
     // 3.4" x 2.15" x .62" = 86.36, 54.61, 15.748
-    ["Parallella", [86.36, 54.61, 1.25], [3,4], []],
+    ["Parallella", 0, [86.36, 54.61, 1.25], [3,4], []],
     // Pine
-    ["Pine64", [127, 79.45, 1.2], [3,7], [[4.3,4.3],[4.3,75.2],[122.7,4.3],[122.7,75.2]]],
+    ["Pine64", 0, [127, 79.45, 1.2], [3,7], [[4.3,4.3],[4.3,75.2],[122.7,4.3],[122.7,75.2]]],
     // Raspberry Pi
-    ["RPi1B",  	[85, 56, 1.25], [], [[80, 43.5], [25, 17.5]]],
-    ["RPi1B+",  [85, 56, 1.25], [2.75, 6.2], [[3.5, 3.5], [61.5, 3.5], [3.5, 52.5], [61.5, 52.5]]],
+    ["RPi1B",  	180, [85, 56, 1.25], [], [[80, 43.5], [25, 17.5]]],
+    // TESTED
+    ["RPi1B+",  180, [85, 56, 1.25], [2.75, 6.2], [[3.5, 3.5], [61.5, 3.5], [3.5, 52.5], [61.5, 52.5]]],
     ["RPi2B", "RPi1B+"],
     ["RPi3B", "RPi1B+"],
-    ["RPiZero", [65, 30, 1.25], [], [[3.5, 3.5], [61.5, 3.5], [3.5, 26.5], [61.5, 26.5]]],
-    ["RPi1A+",  [65, 56, 1.25], [], [[3.5, 3.5], [61.5, 3.5], [3.5, 52.5], [61.5, 52.5]]]
+    ["RPiZero", 180, [65, 30, 1.25], [], [[3.5, 3.5], [61.5, 3.5], [3.5, 26.5], [61.5, 26.5]]],
+    ["RPi1A+",  180, [65, 56, 1.25], [], [[3.5, 3.5], [61.5, 3.5], [3.5, 52.5], [61.5, 52.5]]]
   ];
 
   // Defaults
@@ -278,30 +311,21 @@ module knownBoard(name, plate, postBase, postTop, design=true, placement) {
   boardIndex = findBoard(name);
   // Customize standoffs with board data
   customTopHeight = (postTop[0] == 2) ?
-    boards[boardIndex][1][2] : postTop[1];
-  customPostBase = (len(boards[boardIndex][2]) == 2) ?
-    [postBase[0], postBase[1], boards[boardIndex][2][1]] :
+    boards[boardIndex][2][2] : postTop[1];
+  customPostBase = (len(boards[boardIndex][3]) == 2) ?
+    [postBase[0], postBase[1], boards[boardIndex][3][1]] :
     [postBase[0], postBase[1], holeExt];
-  customPostTop  = (len(boards[boardIndex][2]) == 2) ?
+  customPostTop  = (len(boards[boardIndex][3]) == 2) ?
     // calibrate for male. Snapin might need to be smaller
-    // Should tolerance be % (97) or fixed # (.0825)?
-    [postTop[0],  customTopHeight,  boards[boardIndex][2][0] * 0.97] :
+    // Should tolerance be % (95) or fixed # (2.72-0.135)?  Probably -fixed 0.14
+    // 3-0.15
+    [postTop[0],  customTopHeight,  boards[boardIndex][3][0] * 0.95] :
     [postTop[0],  customTopHeight,  holeInt];
 
   // generate mount plate
-  translate([-boards[boardIndex][1][0]/2,-boards[boardIndex][1][1]/2,0]) // this should be outside, but dim only known here
-  pcbMountPlate(plate, boards[boardIndex][1], boards[boardIndex][3],
-    (design) ? boards[boardIndex][0] : "", customPostBase, customPostTop, placement);
-
-  /*// testing
-  echo("Func=:",findBoard(name));
-  echo(boards[boardIndex]);
-  echo("0 name=",boards[boardIndex][0]);
-  echo("1 dim =",boards[boardIndex][1]); // ok
-  echo("2 holes =",boards[boardIndex][2]); // ok
-  echo("3 locs=",boards[boardIndex][3]); // ok
-  echo(getBoards(boards));
-  */
+  translate([-boards[boardIndex][2][0]/2,-boards[boardIndex][2][1]/2,0]) // this should be outside, but dim only known here
+  pcbMountPlate(plate, boards[boardIndex][2], boards[boardIndex][4], boards[boardIndex][1],
+    (design) ? boards[boardIndex][0] : "", customPostBase, customPostTop, placement, name);
 }
 
 // Create an array of post mount (post) locations (for customizer)
@@ -332,13 +356,13 @@ if (len("Custom") != len(search("Custom",BoardName))) { // Known board
 } else if (BoardName == "Custom-4Post") { // 4 Standoffs mounts
   mountLocs = [[Mount1X,Mount1Y],[Mount2X,Mount2Y],[Mount3X,Mount3Y],[Mount4X,Mount4Y]];
   translate([-BoardDim[0]/2,-BoardDim[1]/2,0])
-    pcbMountPlate(PlateDim, BoardDim, mountLocs, Image, PostBase, PostTop, Placement);
+    pcbMountPlate(PlateDim, BoardDim, mountLocs, 0, Image, PostBase, PostTop, Placement, Label);
 } else if (BoardName == "Custom-Array") { // array
   arrayX   = [Rows, OriginX, OffsetX];
   arrayY   = [Columns, OriginY, OffsetY];
   mountLocs = mountPoints(arrayX, arrayY);
   translate([-BoardDim[0]/2,-BoardDim[1]/2,0])
-    pcbMountPlate(PlateDim, BoardDim, mountLocs, Image, PostBase, PostTop, Placement);
+    pcbMountPlate(PlateDim, BoardDim, mountLocs, 0, Image, PostBase, PostTop, Placement, Label);
 }
 
 // END Customizer code
