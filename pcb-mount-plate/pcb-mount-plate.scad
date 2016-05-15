@@ -259,7 +259,7 @@ module knownBoard(name, plate, postBase, postTop, design=true, placement) {
     // [Alias, Name]
     // Ardunio
     // Banana Pi
-    // TESTED
+      // TESTED
     ["BPiM1",  0, [92, 60, 1.15], [3,5.2], [[3,3],[3,57],[89,3],[89,52]]],
     ["BPiM1+", "BPiM1"],
     // M2 has 2 additional mount holes: [18.2,16.8],[76.75,28.35]
@@ -268,6 +268,7 @@ module knownBoard(name, plate, postBase, postTop, design=true, placement) {
     ["BPiM2+", 0, [65, 65, 1.25], [], []],
     // Beaglebone
     // Jaguar boards
+      // Have
     ["JaguarOne", 0, [102, 73.75, 1.6], [3,3.7], [[2.35,2.35],[2.35,99.85],[71.25,2.35],[71.25,99.85]]],
     // ODROID
     //OdroidC0
@@ -275,24 +276,27 @@ module knownBoard(name, plate, postBase, postTop, design=true, placement) {
   	["OdroidC2",  0, [85, 56, 1.25], [], []],
   	["OdroidXU4", 0, [82, 58, 1.25], [], []],
     // Orange Pi
-    // Thick 1.5 ?
-    // Holes: Internal 3
-    ["OPiOne",   0, [69, 48, 1.25], [], []],
-    ["OPiPC",    0, [85, 55, 1.25], [], []],
-    ["OPiPlus",  0, [108, 60, 1.25], [], []],
-    ["OPi2",     0, [93, 60, 1.25], [], []],
+    ["OPi",      0, [112, 60, 1.2], [], []],
+    ["OPiOne",   0, [69, 48, 1.2], [], []],
+    ["OPiPC",    0, [85, 55, 1.2], [], []],
+      // Have
+    ["OPiPlus",  0, [108, 60, 1.2], [3,5], [[20.5,11.5],[20.5,48.3],[104.7,3.6],[104.5,56.7]]],
+    ["OPi2",     0, [93, 60, 1.2], [], []],
     ["OPiMini2","OPi2"],
-    ["OPiPlus2", 0, [108, 67, 1.25], [], []],
+      // Have
+    ["OPiMini",  0, [93.5, 60, 1.2], [3,5.1], [[2.8,2.8],[2.8,57.15],[90.6,2.9],[90.6,57.2]],
+    ["OPiPlus2", 0, [108, 67, 1.2], [], []],
     // Parallella
     // https://github.com/parallella/parallella-hw
     // Holes: Internal 0.125" = 3.175
     // 3.4" x 2.15" x .62" = 86.36, 54.61, 15.748
     ["Parallella", 0, [86.36, 54.61, 1.25], [3,4], []],
     // Pine
+      // Have
     ["Pine64", 0, [127, 79.45, 1.2], [3,7], [[4.3,4.3],[4.3,75.2],[122.7,4.3],[122.7,75.2]]],
     // Raspberry Pi
     ["RPi1B",  	180, [85, 56, 1.25], [], [[80, 43.5], [25, 17.5]]],
-    // TESTED
+      // TESTED
     ["RPi1B+",  180, [85, 56, 1.25], [2.75, 6.2], [[3.5, 3.5], [61.5, 3.5], [3.5, 52.5], [61.5, 52.5]]],
     ["RPi2B", "RPi1B+"],
     ["RPi3B", "RPi1B+"],
