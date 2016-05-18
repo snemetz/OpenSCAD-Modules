@@ -18,22 +18,20 @@
 // TODO: Future Feature Ideas
 //	add more designs
 //  improve current designs
-//  plate may need some changes as case for it to mount into is designed
-//  add text to plate between posts and end of plate
 //  fix design resizing so work with non 4 post specs
-//  add grid design - programaticly
 //  add HD mounts w/ known drives and custom
 //    3.5", 2.5" multiple heights
 //  Storage drawers: full box, edges on front to cover rack, cutout in slide for lock clip
 //    Open: top, left, right
 //    Options: hole for nobe, raised label, sliding lid
-//  Design BPi: triangle - thicker dashes further apart
+//  Designs programatic: hex/honeycomb, grid, spiral
+
 // ["BPiM1", "BPiM1+", "BPiM2", "BPiM3", "BPiM2+", "JaguarOne", "OdroidC2", "OdroidXU4", "OPiOne", "OPiPC", "OPiPlus", "OPi2", "OPiMini2", "OPiPlus2", "Pine64", "RPi1B", "RPi1B+", RPi2B, RPi3B, "RPiZero", "RPi1A+"]
 
 // START Thingiverse Customizer code
 
 // Create mounting plate for:
-BoardName    = "RPi3B"; // [Custom, Custom-4Post, Custom-Array, BPiM1, BPiM1+, BPiM2, BPiM3, JaguarOne, Pine64, RPi1B, RPi1B+, RPi2B, RPi3B, RPiZero, RPi1A+]
+BoardName    = "RPi3B"; // [Custom, Custom-4Post, Custom-Array, BPiM1, BPiM1+, BPiM2, BPiM3, JaguarOne, OPiMini, OPiPlus, Pine64, RPi1B, RPi1B+, RPi2B, RPi3B, RPiZero, RPi1A+]
 // Board locations
 Placement = "Rack"; // [Center, Rack]
 // Cutout design in mounting plate for known board
@@ -218,16 +216,18 @@ module pcbMountPlate(plateDim, boardDim, mountLocs, rotateZ, image, postBase, po
     };
     // Cutout design
     //translate([boardDim[0],boardDim[1],0])
-    translate([boardDim[0]-max_x(mountLocs),0,0]) // mount to board end
+    //translate([boardDim[0]-max_x(mountLocs),0,0]) // mount to board end
+    translate([boardDim[0]-max_x(mountLocs)+min_x(mountLocs)-postBase[2]/2,0,0])
       //rotate([0,0,180])
         design_placed(image, mountLocs, plateDim[2]*2, postBase[2], -diff-0.1);
     // Cutout label
-    translate([boardDim[0]+(plateDim[0]-boardDim[0]+postBase[2])/2,
+    //translate([boardDim[0]+(plateDim[0]-boardDim[0]+postBase[2])/2,
+    translate([boardDim[0]+(plateDim[0]-boardDim[0])/2,
             (plateDim[1] - boardDim[1])/4, -plateDim[2]/2])
       rotate([0,0,90])
         linear_extrude(plateDim[2]*2)
           resize([max_y(mountLocs)-min_y(mountLocs)-postBase[2],
-                (plateDim[1] - boardDim[1])/2, 1])
+                (plateDim[1] - boardDim[1])/2 - postBase[2], 1])
             label(labelText);
     if (postTop[0] == 5) { // hollow
       mountHoles(mountLocs, postTop[2], plateDim[2]*2);
@@ -284,7 +284,7 @@ module knownBoard(name, plate, postBase, postTop, design=true, placement) {
     ["OPi2",     0, [93, 60, 1.2], [], []],
     ["OPiMini2","OPi2"],
       // Have
-    ["OPiMini",  0, [93.5, 60, 1.2], [3,5.1], [[2.8,2.8],[2.8,57.15],[90.6,2.9],[90.6,57.2]],
+    ["OPiMini",  0, [93.5, 60, 1.2], [3,5.1], [[2.8,2.8],[2.8,57.15],[90.6,2.9],[90.6,57.2]]],
     ["OPiPlus2", 0, [108, 67, 1.2], [], []],
     // Parallella
     // https://github.com/parallella/parallella-hw
@@ -295,6 +295,7 @@ module knownBoard(name, plate, postBase, postTop, design=true, placement) {
       // Have
     ["Pine64", 0, [127, 79.45, 1.2], [3,7], [[4.3,4.3],[4.3,75.2],[122.7,4.3],[122.7,75.2]]],
     // Raspberry Pi
+      // REDO: calc from oposite origin
     ["RPi1B",  	180, [85, 56, 1.25], [], [[80, 43.5], [25, 17.5]]],
       // TESTED
     ["RPi1B+",  180, [85, 56, 1.25], [2.75, 6.2], [[3.5, 3.5], [61.5, 3.5], [3.5, 52.5], [61.5, 52.5]]],
