@@ -16,6 +16,7 @@
 // TODO:
 //    spiral
 //    Hex add option for cropped at box edge (cut hexes)
+//    round holes w/ box option ??
 
 Width     = 40;
 Height    = 40;
@@ -50,5 +51,5 @@ module hexHoles(width, height, hexDia, spacing, thick) {
     }
 }
 
-//hexHoles(Width, Height, Diameter, Spacing, Thickness);
+translate([-Width, 0, 0]) hexHoles(Width, Height, Diameter, Spacing, Thickness);
 gridHoles(Width, Height, Diameter, Spacing, Thickness);
