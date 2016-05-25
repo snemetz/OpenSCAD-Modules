@@ -62,7 +62,8 @@ BoardY = 60;
 BoardZ = 1.25;
 /* [Cutout Design] */
 // Select cutout design for custom
-Image  = "RPi"; // [BPi:Banana Pi, Odroid, OPi:Orange Pi, Parallella, Pine64, RPi:Raspberry Pi]
+Image  = "voronoi"; // [grid, honeycomb, spiral, voronoi, BPi:Banana Pi, Odroid, OPi:Orange Pi, Parallella, Pine64, RPi:Raspberry Pi]
+
 // Label Text
 Label  = "";
 /* [Custom Array Standoffs] */
@@ -92,6 +93,7 @@ BoardDim = [BoardX, BoardY, BoardZ];
 
 use <../standoffs/StandoffGenerator.scad>;
 use <designs.scad>;
+use <../patterns/design-patterns.scad>;
 
 // If standoffs are hollow, plate needs holes
 //	Parameters
@@ -156,9 +158,30 @@ module design_placed(image, locations, boardThick, postDia, z) {
   shrinkage = postDia + postDia/2;
   len_x = max_x(locations)-min_x(locations);
   len_y = max_y(locations)-min_y(locations);
-  translate([len_x/2,len_y/2,z])
-  resize([len_x-shrinkage,len_y-shrinkage,boardThick+1])
-    rotate([0,0,90]) design(image);
+  // TODO fix translates for all program designs. Are not staying centered
+  //    Check origin compared with logo images. Logo center origin, program origin lower left
+  // y might be ok, x bad
+  // x = -shrinkage/2 sometimes
+  if (image == "grid") {
+    translate([-(len_x-shrinkage)/2,shrinkage,z])
+      gridCutout(len_x-shrinkage,len_y-shrinkage, 6, 1.2, boardThick+1);
+  }
+  else if (image == "honeycomb") {
+    translate([-(len_x-shrinkage)/2,shrinkage,z])
+      honeycombCutout(len_x-shrinkage,len_y-shrinkage, 6, 1.2, boardThick+1);
+  }
+  else if (image == "spiral") {
+    translate([-(len_x-shrinkage)/2,shrinkage,z])
+      spiralCutout(len_x-shrinkage,len_y-shrinkage, boardThick+1);
+  }
+  else if (image == "voronoi") {
+    translate([-(len_x-shrinkage)/2,shrinkage,z])
+      voronoiCutout(len_x-shrinkage,len_y-shrinkage, boardThick+1);
+  }
+  else
+    translate([len_x/2, len_y/2, z])
+      resize([len_x-shrinkage, len_y-shrinkage, boardThick+1])
+        rotate([0,0,90]) design(image);
 }
 
 // Create mount board

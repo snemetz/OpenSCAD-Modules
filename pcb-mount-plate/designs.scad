@@ -3,9 +3,13 @@
 ** Designs Library
 **
 */
-// v0.4 Update OPi
-// v0.3 Update BPi
-// v0.2 Update designs
+// Author: Steven Nemetz
+/*
+  REVISION HISTORY
+  v0.4 Update OPi
+  v0.3 Update BPi
+  v0.2 Update designs
+*/
 
 // Module names are of the form poly_<inkscape-path-id>().
 // As a result you can associate a polygon in this OpenSCAD program with the
