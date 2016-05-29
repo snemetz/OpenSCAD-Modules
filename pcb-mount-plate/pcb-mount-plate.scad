@@ -21,6 +21,11 @@
 //  fix design resizing so work with non 4 post specs
 //  add HD mounts w/ known drives and custom
 //    3.5", 2.5" multiple heights
+//    2.5" - SATA Data & Power, 4 side & 4 bottom mounts
+//      clips - rasied off plate
+//        small bumps to match both mount holes, slide drive in place
+//        front flex clip t ensure stays in place
+//      69.65-69.9 x 100.11-100.6 x 9,9.4
 //  Storage drawers: full box, edges on front to cover rack, cutout in slide for lock clip
 //    Open: top, left, right
 //    Options: hole for nobe, raised label, sliding lid
@@ -128,15 +133,17 @@ module design(image) {
   // match = undef
   // len(search([image], )[0]) != 0
   if (image == "Pine64") {design_pine64();
-  } else if (len(search([image], ["BPi", "BPiM1","BPiM2+"])[0]) != 0)
-   {design_bpi();
-  } else if (len(search([image], ["Odroid", "OdroidC0", "OdroidC1+",  "OdroidC2", "OdroidXU4"])[0]) != 0)
-   {design_odroid();
-  } else if (len(search([image], ["OPi","OPiOne","OPiPC","OPiPlus","OPi2","OPiPlus2"])[0]) != 0)
-   {design_opi();
-  } else if (len(search([image], ["RPi","RPi1B","RPi1B+","RPiZero","RPi1A+"])[0]) != 0)
-   {design_rpi();
-  } else if (image == "Parallella") {design_parallella();};
+  } else if (len(search([image], ["BPi", "BPiM1","BPiM2+"])[0]) != 0) {
+    design_bpi();
+  } else if (len(search([image], ["Odroid", "OdroidC0", "OdroidC1+",  "OdroidC2", "OdroidXU4"])[0]) != 0) {
+    design_odroid();
+  } else if (len(search([image], ["OPi","OPiOne","OPiPC","OPiPlus","OPi2","OPiPlus2"])[0]) != 0) {
+    design_opi();
+  } else if (len(search([image], ["RPi","RPi1B","RPi1B+","RPiZero","RPi1A+"])[0]) != 0) {
+    design_rpi();
+  } else if (image == "Parallella") {
+    design_parallella();
+  };
 }
 
 // Setup design to merge into plate
@@ -165,23 +172,20 @@ module design_placed(image, locations, boardThick, postDia, z) {
   if (image == "grid") {
     translate([-(len_x-shrinkage)/2,shrinkage,z])
       gridCutout(len_x-shrinkage,len_y-shrinkage, 6, 1.2, boardThick+1);
-  }
-  else if (image == "honeycomb") {
+  } else if (image == "honeycomb") {
     translate([-(len_x-shrinkage)/2,shrinkage,z])
       honeycombCutout(len_x-shrinkage,len_y-shrinkage, 6, 1.2, boardThick+1);
-  }
-  else if (image == "spiral") {
+  } else if (image == "spiral") {
     translate([-(len_x-shrinkage)/2,shrinkage,z])
       spiralCutout(len_x-shrinkage,len_y-shrinkage, boardThick+1);
-  }
-  else if (image == "voronoi") {
+  } else if (image == "voronoi") {
     translate([-(len_x-shrinkage)/2,shrinkage,z])
       voronoiCutout(len_x-shrinkage,len_y-shrinkage, boardThick+1);
-  }
-  else
+  } else {
     translate([len_x/2, len_y/2, z])
       resize([len_x-shrinkage, len_y-shrinkage, boardThick+1])
         rotate([0,0,90]) design(image);
+  }
 }
 
 // Create mount board
@@ -232,8 +236,7 @@ module pcbMountPlate(plateDim, boardDim, mountLocs, rotateZ, image, postBase, po
         translate([boardDim[0],boardDim[1],0])
         rotate([0,0,rotateZ])
         board(boardDim,mountLocs, postBase, postTop);
-      }
-      else {
+      } else {
         board(boardDim,mountLocs, postBase, postTop);
       }
     };
@@ -296,7 +299,8 @@ module knownBoard(name, plate, postBase, postTop, design=true, placement) {
     // ODROID
     //OdroidC0
     //["OdroidC1+", [85, 56, 1.25],[]], // same as C2
-  	["OdroidC2",  0, [85, 56, 1.25], [], []],
+      // Have
+  	["OdroidC2",  0, [85, 56, 1.25], [3,5.5], [[23.5,3.6],[23.5,52.5],[81.5,3.6],[81.5,52.5]]],
   	["OdroidXU4", 0, [82, 58, 1.25], [], []],
     // Orange Pi
     ["OPi",      0, [112, 60, 1.2], [], []],
@@ -320,7 +324,7 @@ module knownBoard(name, plate, postBase, postTop, design=true, placement) {
     // Raspberry Pi
       // REDO: calc from oposite origin
     ["RPi1B",  	180, [85, 56, 1.25], [], [[80, 43.5], [25, 17.5]]],
-      // TESTED
+      // TESTED // REDO: calc from oposite origin
     ["RPi1B+",  180, [85, 56, 1.25], [2.75, 6.2], [[3.5, 3.5], [61.5, 3.5], [3.5, 52.5], [61.5, 52.5]]],
     ["RPi2B", "RPi1B+"],
     ["RPi3B", "RPi1B+"],
