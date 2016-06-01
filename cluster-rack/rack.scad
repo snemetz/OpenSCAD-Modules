@@ -11,6 +11,7 @@
 // Thingiverse Customizable: http://www.thingiverse.com/thing:1538381
 /*
   REVISION HISTORY
+  v0.3 Add modular connectors
   v0.2 Add cutout designs and cutout controls
   v0.1 Initial working version
 */
@@ -28,6 +29,8 @@
 // Number of rack slots
 Slots      = 2; // [1:12]
 SlotHeight = 28.5; // Space between slots or space including slot
+// Add slot to allow units to connect to each other
+Modular    = true; // [true, false]
 /* [Mount Plate Info] */
 // Length
 PlateX  = 112;
@@ -156,10 +159,11 @@ module rackEnd(plateDim, wall, backWall, ledge, tolerance, design) {
 }
 module modularSpacer(plateDim, wall, backWall, ledge, tolerance, height) {
   // create 4 sides to match walls
+  // FIX: front wall may be too thick (4mm? reduce to 2 or 3?)
   difference () {
     cube([plateDim[1]+2*wall+tolerance, plateDim[0]+wall*2+backWall, height]); // z = spacer height
     translate([wall, backWall, -0.001])
-      cube([plateDim[1]+tolerance, plateDim[0], height*2]); // z = spacer height *2
+      cube([plateDim[1]+tolerance, plateDim[0]+wall, height*2]); // z = spacer height *2
   }
 }
 // Create the top half of the rack slide
@@ -248,6 +252,31 @@ module rack1U(plateDim, wall, backWall, uHeight, ledge, tolerance=0.25, designs,
   }
 }
 
+// Cut slots for modular connection clips
+//	Parameters
+//    plateDim  : [x, y, z]
+//    wall      : wall thickness
+//    backWall  : back wall thickness
+//    clip      : [clipLen, clipHeight, clipWall]
+//    tolerance : side wall tolerance
+//    top       : is placement of slots for top or bottom?
+module modularSlots(plateDim, wall, backWall, clip, tolerance, top) {
+  // TODO: fix exact placement
+  offsetZ = (top) ? wall+clip[1]/2 : -clip[1]/2;
+  // Side Modular Slots
+  for (x=[wall+clip[2]-0.001, plateDim[1]+wall+clip[2]+2*tolerance]) {
+    for (y=[10, plateDim[0]+backWall+2*wall-10-clip[0]]) {
+      translate([x, y, offsetZ]) rotate([0, 0, 90])
+        cube([clip[0], clip[2]+wall, clip[1]]);
+    }
+  }
+  // Back Modular Slots
+  for (x=[10, plateDim[1]+wall*2+tolerance*2-clip[0]-10]) {
+    translate([x, plateDim[0]+backWall+wall-clip[2]+0.001, offsetZ])
+      cube([clip[0], clip[2]+wall, clip[1]]);
+  }
+}
+
 // Create a rack case
 //	Parameters
 //    plateDim  : [x, y, z]
@@ -258,43 +287,42 @@ module rack1U(plateDim, wall, backWall, uHeight, ledge, tolerance=0.25, designs,
 //    ledge     : rack slide width
 //    designs   : Vector of design names [left, back, right, ends]
 //    designLens: [left, right]
+// ADD: modular
 //  TODO:
 //    add spacing at ends for clip space - create module for
 //      match top wider part of clip depth = clipHeight/2
 //    add cutouts for clips - if using external clips
 //      12.5 from end X, 5 from end y
 //      cut 12.1 x (clipLen+tolerance), clipHeight/2 z - match top wider part of clip depth
-module rack(plateDim, wall, backWall, slots, slotHeight, ledge, designs, designLens) {
-  tolerance = 0.25;
+module rack(plateDim, wall, backWall, slots, slotHeight, ledge, designs, designLens, modular) {
+  tolerance  = 0.25;
+  clipHeight = 8;
+  clipLen    = 11.5;
+  clipWall   = 1.8;
+  clip       = [clipLen, clipHeight, clipWall];
   translate([])
-    difference() { union() {
-      rackEnd(plateDim, wall, backWall, ledge, tolerance, designs[3]);
-      // modular spacing
-      //translate([0,0,wall])
-      //modularSpacer(plateDim, wall, backWall, ledge, tolerance, clipHeight);
+    difference() {
+      union() {
+        rackEnd(plateDim, wall, backWall, ledge, tolerance, designs[3]);
+        translate([0,0,wall])
+          modularSpacer(plateDim, wall, backWall, ledge, tolerance, clipHeight);
+      }
+      if (modular) modularSlots(plateDim, wall, backWall, clip, tolerance, false);
     }
-    // modular slots - all cubes same size, diff translate = for loop ?
-    // translate([,,0])
-    // cube([clipLen, clipWall+wall, clipHeight/2]);
-    // 2 per sides
-    // 2 on back
-  }
-  translate([0,0,wall]) // wall + modulare spacing
+  translate([0,0,wall+clipHeight])
     for(i=[1:slots]){
       translate([0,0,(i-1)*slotHeight])
       rack1U(plateDim, wall, backWall, slotHeight, ledge, tolerance, designs, designLens);
     }
-  translate([0,0,slots*slotHeight+wall]) // + modular spacing
+  translate([0,0,slots*slotHeight+wall+clipHeight])
     difference() {
-    union() {
-      // modular spacing
-      //modularSpacer(plateDim, wall, backWall, ledge, tolerance, clipHeight);
-      //translate([0,0,clipHeight/2])
-      rackEnd(plateDim, wall, backWall, ledge, tolerance, designs[3]);
+      union() {
+        modularSpacer(plateDim, wall, backWall, ledge, tolerance, clipHeight);
+        translate([0,0,clipHeight])
+          rackEnd(plateDim, wall, backWall, ledge, tolerance, designs[3]);
+      }
+      if (modular) modularSlots(plateDim, wall, backWall, clip, tolerance, true);
     }
-    // modular slots
-    // translate([,,wall+clipHeight/2])
-  }
 }
 
 // External clips
@@ -339,8 +367,8 @@ module clipCenter(caseWall) {
 // Customizer code
 
 // rotate to make printable
-translate([(Slots*SlotHeight)/2,-(PlateDim[1]+2*Wall)/2,PlateDim[0]+BackWall+Wall*2])
-  rotate([-90,0,90])
-    rack(PlateDim, Wall, BackWall, Slots, SlotHeight, Ledge, Designs, DesignLens);
+//translate([(Slots*SlotHeight)/2,-(PlateDim[1]+2*Wall)/2,PlateDim[0]+BackWall+Wall*2])
+  //rotate([-90,0,90])
+    rack(PlateDim, Wall, BackWall, Slots, SlotHeight, Ledge, Designs, DesignLens, Modular);
 
 // END
