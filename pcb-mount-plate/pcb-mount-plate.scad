@@ -28,7 +28,8 @@
 //      69.65-69.9 x 100.11-100.6 x 9,9.4
 //  Storage drawers: full box, edges on front to cover rack, cutout in slide for lock clip
 //    Open: top, left, right
-//    Options: hole for nobe, raised label, sliding lid
+//    Options: hole for knob, raised label, sliding lid, pull tab
+//    Drawer sections. Add dividers: 2, 3, or 4 sections
 //  Designs programatic: hex/honeycomb, grid, spiral
 
 // ["BPiM1", "BPiM1+", "BPiM2", "BPiM3", "BPiM2+", "JaguarOne", "OdroidC2", "OdroidXU4", "OPiOne", "OPiPC", "OPiPlus", "OPi2", "OPiMini2", "OPiPlus2", "Pine64", "RPi1B", "RPi1B+", RPi2B, RPi3B, "RPiZero", "RPi1A+"]
@@ -370,6 +371,32 @@ function mountPoints(row_data, column_data) = [
       [(j-1) * row_data[2] + row_data[1], (i-1) * column_data[2] + column_data[1]]
 ];
 
+//  Storage drawers: full box, edges on front to cover rack, cutout in slide for lock clip
+//    Open: top, left, right
+//    Options: hole for knob, raised label, sliding lid, pull tab
+//    Drawer sections. Add dividers: 2, 3, or 4 sections
+module drawer(plateDim, height, wall, caseLedge, caseClip, openEnd) {
+  // Top Open
+  // add handle, front panle slightly taller?
+  // Slightly above mount plate - Figure out diff
+  Ledge=6;
+  Wall=2;
+  Clip=4;
+  translate([0, -Ledge+Wall, 0])
+    difference() {
+      cube([PlateDim[0]+Clip, PlateDim[1]-2*Ledge, 20]);
+      // Open Top
+      translate([Wall, Wall, PlateDim[2]])
+        cube([PlateDim[0]+Wall, PlateDim[1]-2*Ledge-2*Wall, 20]);
+      // Open left
+      //translate([Wall, -0.001, PlateDim[2]])
+      //  cube([PlateDim[0]+Wall, PlateDim[1]-2*Ledge-2*Wall, 20-PlateDim[2]-Wall]);
+      // Open Right
+      //translate([Wall, 2*Wall+0.001, PlateDim[2]])
+      //  cube([PlateDim[0]+Wall, PlateDim[1]-2*Ledge-2*Wall, 20-PlateDim[2]-Wall]);
+    }
+    translate([PlateDim[0]+Clip, -Ledge-2*Wall, 0]) cube([Wall, PlateDim[1], 20]);
+}
 /*
 **
 ** END Mount Plate Module
