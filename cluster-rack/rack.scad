@@ -16,6 +16,7 @@
   v0.1 Initial working version
 */
 
+// TODO:
 // Future ideas:
 //  known board/hd U heights
 //  see about designing to not need support
@@ -26,8 +27,10 @@
 
 // START CUSTOMIZER DATA
 
+// What to print?
+PrintDesign = "Rack"; // [Rack, ClipCenter: Clip Center, ClipEnd:Clip End]
 // Number of rack slots
-Slots      = 2; // [1:12]
+Slots      = 2;    // [1:12]
 SlotHeight = 28.5; // Space between slots or space including slot
 // Add slot to allow units to connect to each other
 Modular    = true; // [true, false]
@@ -159,11 +162,12 @@ module rackEnd(plateDim, wall, backWall, ledge, tolerance, design) {
 }
 module modularSpacer(plateDim, wall, backWall, ledge, tolerance, height) {
   // create 4 sides to match walls
-  // FIX: front wall may be too thick (4mm? reduce to 2 or 3?)
+  // FIX: front wall too thick (4mm? reduce to 2 or 3?) - done
+  // TODO: reduce hieght of front wall or remove ?
   difference () {
     cube([plateDim[1]+2*wall+tolerance, plateDim[0]+wall*2+backWall, height]); // z = spacer height
-    translate([wall, backWall, -0.001])
-      cube([plateDim[1]+tolerance, plateDim[0]+wall, height*2]); // z = spacer height *2
+    translate([wall, wall, -0.001])
+      cube([plateDim[1]+tolerance, plateDim[0]+2*wall, height*2]); // z = spacer height *2
   }
 }
 // Create the top half of the rack slide
@@ -175,6 +179,7 @@ module modularSpacer(plateDim, wall, backWall, ledge, tolerance, height) {
 //    left      : Is this the left side? (Boolean)
 module rack_slide_top(plateDim, ledge, wall, backWall, left) {
   // TODO: make thicker or widther top slide to make flex clip stronger
+  // TODO: reduce clip height. sm size sykinder but merge higher into slide
   // clip = wall*2 // r = wall // don't be relative to wall
   cutWidth = 0.5;
   cutLen   = 30;
@@ -188,7 +193,7 @@ module rack_slide_top(plateDim, ledge, wall, backWall, left) {
         cube([cutWidth, cutLen, wall+0.02]);
     }
     // Add end clip
-    translate([offsetClip,wall,0]) rotate([90,0,90])
+    translate([offsetClip, wall, wall/2]) rotate([90,0,90])
       difference() {
         // height = flex clip width
         cylinder(r=wall, h=ledge-cutWidth, center=false, $fn=50);
@@ -262,18 +267,28 @@ module rack1U(plateDim, wall, backWall, uHeight, ledge, tolerance=0.25, designs,
 //    top       : is placement of slots for top or bottom?
 module modularSlots(plateDim, wall, backWall, clip, tolerance, top) {
   // TODO: fix exact placement
-  offsetZ = (top) ? wall+clip[1]/2 : -clip[1]/2;
+  // FIX: cut holes slightly deeper - clips don't fit flush
+  offsetZ = (top) ? wall+clip[1]/2 - tolerance : -clip[1]/2 + tolerance;
   // Side Modular Slots
-  for (x=[wall+clip[2]-0.001, plateDim[1]+wall+clip[2]+2*tolerance]) {
+  // FIX: sides are 1mm short - Check after not rotate and + 1
+  // Issue with rotate or printer (z axis accuracy)?
+  for (x=[-0.001, plateDim[1]+2*tolerance]) {
     for (y=[10, plateDim[0]+backWall+2*wall-10-clip[0]]) {
-      translate([x, y, offsetZ]) rotate([0, 0, 90])
-        cube([clip[0], clip[2]+wall, clip[1]]);
+      translate([x, y, offsetZ])
+        cube([clip[2]+wall, clip[0]+tolerance+1, clip[1]]);
     }
   }
+/*  for (x=[wall+clip[2]-0.001, plateDim[1]+wall+clip[2]+2*tolerance]) {
+    for (y=[10, plateDim[0]+backWall+2*wall-10-clip[0]]) {
+      translate([x, y, offsetZ]) rotate([0, 0, 90])
+        cube([clip[0]+tolerance, clip[2]+wall, clip[1]]); // x needs to be larger on sides than end for some reason
+        // maybe change dim instead of rotate?
+    }
+  }*/
   // Back Modular Slots
   for (x=[10, plateDim[1]+wall*2+tolerance*2-clip[0]-10]) {
-    translate([x, plateDim[0]+backWall+wall-clip[2]+0.001, offsetZ])
-      cube([clip[0], clip[2]+wall, clip[1]]);
+    translate([x, plateDim[0]+backWall+wall-clip[2], offsetZ]) // Fix y calc reduce slightly
+      cube([clip[0]+tolerance, (clip[2]+wall)*2, clip[1]]);
   }
 }
 
@@ -348,13 +363,12 @@ module clipEnd(clipLen=11.5, clipHeight=8, clipWall=1.8, caseWall=2, center=fals
     translate([1.4, clipWall+caseWall*0.25, centerCut])
       cube([clipLen, caseWall*1.5, clipHeight]);
     // Cut end
-    translate([clipLen, clipWall+caseWall*0.25, 0])
+    translate([clipLen-0.7, clipWall+caseWall*0.25, -0.7])
       rotate([0,-45,0])
-        cube(caseWall*1.5);
+        cube([caseWall*3, caseWall*1.5, caseWall*3]);
   }
 }
 module clipCenter(caseWall) {
-  caseWall  = 2;
   clipWall  = 1.8;
   clipWidth = caseWall*2+clipWall*2;
   rotate([0,-90,0])
@@ -366,9 +380,18 @@ module clipCenter(caseWall) {
 
 // Customizer code
 
+if (PrintDesign == "ClipCenter") {
+  clipCenter(Wall);
+} else if (PrintDesign == "ClipEnd") {
+  clipEnd(caseWall=Wall);
+} else if (PrintDesign == "Rack") {
 // rotate to make printable
+// fix to account for added modularSpacer
 //translate([(Slots*SlotHeight)/2,-(PlateDim[1]+2*Wall)/2,PlateDim[0]+BackWall+Wall*2])
   //rotate([-90,0,90])
     rack(PlateDim, Wall, BackWall, Slots, SlotHeight, Ledge, Designs, DesignLens, Modular);
+} else {
+  echo("ERROR: unknown design to print");
+}
 
 // END
