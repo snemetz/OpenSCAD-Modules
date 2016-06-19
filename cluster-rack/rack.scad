@@ -22,6 +22,8 @@
 //  see about designing to not need support
 //  modular with clips: 1 side holes, 1 side clips - do for side & top/bottom
 //    options: either, both, none. Only clips/holes for ends
+//  Create cable managements clips and/or clip strips. Adjustable sizes for different amounts of cables
+//    possible to add another hole on bottom side of back if needed
 //
 // build: 10 x 4 or 5 x 2 x4
 
