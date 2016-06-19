@@ -227,6 +227,8 @@ module label(txt) {
 //    postTop: [style, topHeight, topDiameter]
 //    placement: board location: center (default), rack (center back)
 module pcbMountPlate(plateDim, boardDim, mountLocs, rotateZ, image, postBase, postTop, placement, labelText) {
+  // TODO: Setup from drawer (NO posts-No call to board) & hard drives
+  //  Type: drawer, standoff, hard drive
   translateY = (placement == "Rack") ? 0 : -(plateDim[0] - boardDim[0])/2;
   diff = plateDim[2] - boardDim[2];
   difference () {
@@ -379,6 +381,8 @@ module drawer(plateDim, height, wall, caseLedge, caseClip, openEnd) {
   // Top Open
   // add handle, front panle slightly taller?
   // Slightly above mount plate - Figure out diff
+  // Plate is -z = PlateDim[2] - board  // need to do same with drawer
+  //  or set board Z = Plate Z
   Ledge=6;
   Wall=2;
   Clip=4;
@@ -395,7 +399,32 @@ module drawer(plateDim, height, wall, caseLedge, caseClip, openEnd) {
       //translate([Wall, 2*Wall+0.001, PlateDim[2]])
       //  cube([PlateDim[0]+Wall, PlateDim[1]-2*Ledge-2*Wall, 20-PlateDim[2]-Wall]);
     }
+    // Front Panel
     translate([PlateDim[0]+Clip, -Ledge-2*Wall, 0]) cube([Wall, PlateDim[1], 20]);
+    // Handle
+    // TODO: round handle corners - use rounded box or 1/2 rounded instead of cube - need code from boxes lib
+    handleSize = 10;
+    cornerRad  = 2;
+    translate([PlateDim[0]+Clip+Wall, PlateDim[1]/2, 0])
+      rotate([0, 0, -90])
+        union() {
+          $fn = 50;
+          difference() {
+            translate([PlateDim[1]/8, handleSize/2-cornerRad/2, PlateDim[2]])
+              roundedBox([PlateDim[1]/4, handleSize+cornerRad/2, PlateDim[2]*2], 2, true);
+            translate([0,-cornerRad, -0.001])
+              cube([PlateDim[1]/4, cornerRad, PlateDim[2]*4]);
+          }
+          //cube([PlateDim[1]/4, handleSize, PlateDim[2]*2]);
+          // Maybe more gradual curve ?
+          difference() {
+            translate([0, 0, PlateDim[2]+cornerRad/2])
+              cube([PlateDim[1]/4, cornerRad, cornerRad]);
+            translate([-PlateDim[1]/8-1, cornerRad, PlateDim[2]+cornerRad*1.5])
+              rotate([0,90,0])
+                cylinder(h=PlateDim[1]/2+2, r=cornerRad, $fn = 50);
+          };
+        }
 }
 /*
 **
@@ -416,6 +445,7 @@ if (len("Custom") != len(search("Custom",BoardName))) { // Known board
   mountLocs = [[Mount1X,Mount1Y],[Mount2X,Mount2Y],[Mount3X,Mount3Y],[Mount4X,Mount4Y]];
   translate([-BoardDim[0]/2,-BoardDim[1]/2,0])
     pcbMountPlate(PlateDim, BoardDim, mountLocs, 0, Image, PostBase, PostTop, Placement, Label);
+    //drawer();
 } else if (BoardName == "Custom-Array") { // array
   arrayX   = [Rows, OriginX, OffsetX];
   arrayY   = [Columns, OriginY, OffsetY];
@@ -460,3 +490,45 @@ knownBoard(board, plate, postBase, postTop, design=true);
 
 
 // Add libaries for customizer here
+
+// Extracted from:
+// Library: boxes.scad
+// Version: 1.0
+// Author: Marius Kintel
+// Copyright: 2010
+// License: BSD
+
+// roundedBox([width, height, depth], float radius, bool sidesonly);
+// EXAMPLE USAGE:
+// roundedBox([20, 30, 40], 5, true);
+// size is a vector [w, h, d]
+module roundedBox(size, radius, sidesonly) {
+  rot = [ [0,0,0], [90,0,90], [90,90,0] ];
+  if (sidesonly) {
+    cube(size - [2*radius,0,0], true);
+    cube(size - [0,2*radius,0], true);
+    for (x = [radius-size[0]/2, -radius+size[0]/2],
+           y = [radius-size[1]/2, -radius+size[1]/2]) {
+      translate([x,y,0]) cylinder(r=radius, h=size[2], center=true);
+    }
+  }
+  else {
+    cube([size[0], size[1]-radius*2, size[2]-radius*2], center=true);
+    cube([size[0]-radius*2, size[1], size[2]-radius*2], center=true);
+    cube([size[0]-radius*2, size[1]-radius*2, size[2]], center=true);
+
+    for (axis = [0:2]) {
+      for (x = [radius-size[axis]/2, -radius+size[axis]/2],
+             y = [radius-size[(axis+1)%3]/2, -radius+size[(axis+1)%3]/2]) {
+        rotate(rot[axis])
+          translate([x,y,0])
+          cylinder(h=size[(axis+2)%3]-2*radius, r=radius, center=true);
+      }
+    }
+    for (x = [radius-size[0]/2, -radius+size[0]/2],
+           y = [radius-size[1]/2, -radius+size[1]/2],
+           z = [radius-size[2]/2, -radius+size[2]/2]) {
+      translate([x,y,z]) sphere(radius);
+    }
+  }
+}
