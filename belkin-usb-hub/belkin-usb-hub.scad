@@ -5,9 +5,9 @@ hubLen=150;
 module f4u039(hubLen) {
   union() {
     // Wide end
-    translate([0, -5, 0]) cylinder(hubLen, r=13);
+    translate([0, -5, 0]) cylinder(hubLen, r=13, $fn = 50);
     // Narrow end
-    translate([-26, 0, 0]) cylinder(hubLen, r=8);
+    translate([-26, 0, 0]) cylinder(hubLen, r=8, $fn = 50);
     // Flat top
     translate([-34, 0, 0]) cube([34, 8, hubLen]);
     // Fill center
@@ -21,7 +21,7 @@ module f4u039(hubLen) {
 // Same but more distance between cylinders
 
 // Then print a short piece and check
-
+//translate([0,50,0]) f4u039(150);
 difference() {
     translate([-40, -25, 0.001]) cube([60, 40, 10]);
     f4u039(150);
