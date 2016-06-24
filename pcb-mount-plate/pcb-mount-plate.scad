@@ -37,11 +37,11 @@
 // START Thingiverse Customizer code
 
 // Create mounting plate for:
-BoardName    = "RPi3B"; // [Custom, Custom-4Post, Custom-Array, BPiM1, BPiM1+, BPiM2, BPiM3, JaguarOne, OPiMini, OPiPlus, Pine64, RPi1B, RPi1B+, RPi2B, RPi3B, RPiZero, RPi1A+]
+BoardName    = "Drawer"; // [Custom-4Post, Custom-Array, Drawer, BPiM1, BPiM1+, BPiM2, BPiM3, JaguarOne, OPiMini, OPiPlus, Pine64, RPi1B, RPi1B+, RPi2B, RPi3B, RPiZero, RPi1A+]
 // Board locations
 Placement = "Rack"; // [Center, Rack]
 // Cutout design in mounting plate for known board
-Design       = true; // [true, false]
+Design       = false; // [true, false]
 /* [Mounting Plate Dimensions] */
 // Length
 PlateX = 112;
@@ -68,7 +68,7 @@ BoardY = 60;
 BoardZ = 1.25;
 /* [Cutout Design] */
 // Select cutout design for custom
-Image  = "voronoi"; // [grid, honeycomb, spiral, voronoi, BPi:Banana Pi, Odroid, OPi:Orange Pi, Parallella, Pine64, RPi:Raspberry Pi]
+Image  = ""; // [grid, honeycomb, spiral, voronoi, BPi:Banana Pi, Odroid, OPi:Orange Pi, Parallella, Pine64, RPi:Raspberry Pi]
 
 // Label Text
 Label  = "";
@@ -88,6 +88,12 @@ Mount3X = 61.5;
 Mount3Y = 3.5;
 Mount4X = 61.5;
 Mount4Y = 52.5;
+/* [Drawer data] */
+DrawerHeight  = 20;
+DrawerWall    = 2;
+CaseLedge     = 6;
+CaseClip      = 4;
+DrawerOpenEnd = "Top"; // [Top, Right, Left]
 
 /* [Hidden] */
 PostBase = [BaseShape, (Placement == "Rack") ? 5 : BaseHeight, BaseDiameter];
@@ -237,8 +243,8 @@ module pcbMountPlate(plateDim, boardDim, mountLocs, rotateZ, image, postBase, po
         cube(plateDim);
       if (rotateZ == 180 ) {
         translate([boardDim[0],boardDim[1],0])
-        rotate([0,0,rotateZ])
-        board(boardDim,mountLocs, postBase, postTop);
+          rotate([0,0,rotateZ])
+            board(boardDim,mountLocs, postBase, postTop);
       } else {
         board(boardDim,mountLocs, postBase, postTop);
       }
@@ -378,53 +384,56 @@ function mountPoints(row_data, column_data) = [
 //    Options: hole for knob, raised label, sliding lid, pull tab
 //    Drawer sections. Add dividers: 2, 3, or 4 sections
 module drawer(plateDim, height, wall, caseLedge, caseClip, openEnd) {
-  // Top Open
-  // add handle, front panle slightly taller?
-  // Slightly above mount plate - Figure out diff
-  // Plate is -z = PlateDim[2] - board  // need to do same with drawer
-  //  or set board Z = Plate Z
-  Ledge=6;
-  Wall=2;
-  Clip=4;
-  translate([0, -Ledge+Wall, 0])
+  // front panel slightly taller?
+  // probably need to add a tolerance to ledge - make draw box slightly smaller
+
+  // mount plate
+  translate([0, -caseLedge-2*wall, 0])
+    cube(plateDim);
+  // Drawer box
+  translate([0, -caseLedge+wall, 0])
     difference() {
-      cube([PlateDim[0]+Clip, PlateDim[1]-2*Ledge, 20]);
-      // Open Top
-      translate([Wall, Wall, PlateDim[2]])
-        cube([PlateDim[0]+Wall, PlateDim[1]-2*Ledge-2*Wall, 20]);
-      // Open left
-      //translate([Wall, -0.001, PlateDim[2]])
-      //  cube([PlateDim[0]+Wall, PlateDim[1]-2*Ledge-2*Wall, 20-PlateDim[2]-Wall]);
-      // Open Right
-      //translate([Wall, 2*Wall+0.001, PlateDim[2]])
-      //  cube([PlateDim[0]+Wall, PlateDim[1]-2*Ledge-2*Wall, 20-PlateDim[2]-Wall]);
+      cube([plateDim[0]+caseClip, plateDim[1]-2*caseLedge, height]);
+      if (openEnd == "Top") {
+        // Open Top
+        translate([wall, wall, plateDim[2]])
+          cube([plateDim[0]+wall, plateDim[1]-2*caseLedge-2*wall, height]);
+      } else if (openEnd == "Left") {
+        // Open left
+        translate([wall, -0.001, plateDim[2]])
+          cube([plateDim[0]+wall, plateDim[1]-2*caseLedge-2*wall, height-plateDim[2]-wall]);
+      } else if (openEnd == "Right") {
+        // Open Right
+        translate([wall, 2*wall+0.001, plateDim[2]])
+          cube([plateDim[0]+wall, plateDim[1]-2*caseLedge-2*wall, height-plateDim[2]-wall]);
+      }
     }
-    // Front Panel
-    translate([PlateDim[0]+Clip, -Ledge-2*Wall, 0]) cube([Wall, PlateDim[1], 20]);
-    // Handle
-    // TODO: round handle corners - use rounded box or 1/2 rounded instead of cube - need code from boxes lib
-    handleSize = 10;
-    cornerRad  = 2;
-    translate([PlateDim[0]+Clip+Wall, PlateDim[1]/2, 0])
-      rotate([0, 0, -90])
-        union() {
-          $fn = 50;
-          difference() {
-            translate([PlateDim[1]/8, handleSize/2-cornerRad/2, PlateDim[2]])
-              roundedBox([PlateDim[1]/4, handleSize+cornerRad/2, PlateDim[2]*2], 2, true);
-            translate([0,-cornerRad, -0.001])
-              cube([PlateDim[1]/4, cornerRad, PlateDim[2]*4]);
-          }
-          //cube([PlateDim[1]/4, handleSize, PlateDim[2]*2]);
-          // Maybe more gradual curve ?
-          difference() {
-            translate([0, 0, PlateDim[2]+cornerRad/2])
-              cube([PlateDim[1]/4, cornerRad, cornerRad]);
-            translate([-PlateDim[1]/8-1, cornerRad, PlateDim[2]+cornerRad*1.5])
-              rotate([0,90,0])
-                cylinder(h=PlateDim[1]/2+2, r=cornerRad, $fn = 50);
-          };
+  // Front Panel
+  translate([plateDim[0]+caseClip, -caseLedge-2*wall, 0])
+    cube([wall, plateDim[1], height]);
+  // Handle
+  handleSize = 10;
+  cornerRad  = 2;
+  translate([plateDim[0]+caseClip+wall, plateDim[1]/2, 0])
+    rotate([0, 0, -90])
+      union() {
+        $fn = 50;
+        difference() {
+          translate([plateDim[1]/8, handleSize/2-cornerRad/2, plateDim[2]])
+            roundedBox([plateDim[1]/4, handleSize+cornerRad/2, plateDim[2]*2], 2, true);
+          translate([0,-cornerRad, -0.001])
+            cube([plateDim[1]/4, cornerRad, plateDim[2]*4]);
         }
+        //cube([plateDim[1]/4, handleSize, plateDim[2]*2]);
+        // Maybe more gradual curve ?
+        difference() {
+          translate([0, 0, plateDim[2]+cornerRad/2])
+            cube([plateDim[1]/4, cornerRad, cornerRad]);
+          translate([-plateDim[1]/8-1, cornerRad, plateDim[2]+cornerRad*1.5])
+            rotate([0,90,0])
+              cylinder(h=plateDim[1]/2+2, r=cornerRad, $fn = 50);
+        };
+      }
 }
 /*
 **
@@ -439,19 +448,27 @@ module drawer(plateDim, height, wall, caseLedge, caseClip, openEnd) {
 // This matchs the characters not the substring. So need to be careful with names used
 // if (len("Custom") == len(search("Custom",BoardName)))
 // Custom-Array, Custom-4Post
-if (len("Custom") != len(search("Custom",BoardName))) { // Known board
+if ((len("Custom") != len(search("Custom",BoardName)))
+    && (len("Drawer") != len(search("Drawer",BoardName)))
+    ) { // Known board
   knownBoard(BoardName, PlateDim, PostBase, PostTop, Design, Placement);
 } else if (BoardName == "Custom-4Post") { // 4 Standoffs mounts
   mountLocs = [[Mount1X,Mount1Y],[Mount2X,Mount2Y],[Mount3X,Mount3Y],[Mount4X,Mount4Y]];
   translate([-BoardDim[0]/2,-BoardDim[1]/2,0])
     pcbMountPlate(PlateDim, BoardDim, mountLocs, 0, Image, PostBase, PostTop, Placement, Label);
-    //drawer();
 } else if (BoardName == "Custom-Array") { // array
   arrayX   = [Rows, OriginX, OffsetX];
   arrayY   = [Columns, OriginY, OffsetY];
   mountLocs = mountPoints(arrayX, arrayY);
   translate([-BoardDim[0]/2,-BoardDim[1]/2,0])
     pcbMountPlate(PlateDim, BoardDim, mountLocs, 0, Image, PostBase, PostTop, Placement, Label);
+} else if (BoardName == "Drawer") {
+  translate([-BoardDim[0]/2,-BoardDim[1]/2,0])
+    union() {
+      // TODO: need a plain mount plate
+      //pcbMountPlate(PlateDim, BoardDim, mountLocs, 0, Image, PostBase, PostTop, Placement, Label);
+      drawer(PlateDim, DrawerHeight, DrawerWall, CaseLedge, CaseClip, DrawerOpenEnd);
+    }
 }
 
 // END Customizer code
