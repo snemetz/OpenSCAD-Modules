@@ -166,10 +166,11 @@ module modularSpacer(plateDim, wall, backWall, ledge, tolerance, height) {
   // create 4 sides to match walls
   // FIX: front wall too thick (4mm? reduce to 2 or 3?) - done
   // TODO: reduce hieght of front wall or remove ?
+  // TEMP: +/- 4 to remove front during testing
   difference () {
     cube([plateDim[1]+2*wall+tolerance, plateDim[0]+wall*2+backWall, height]); // z = spacer height
-    translate([wall, wall, -0.001])
-      cube([plateDim[1]+tolerance, plateDim[0]+2*wall, height*2]); // z = spacer height *2
+    translate([wall, wall-4, -0.001])
+      cube([plateDim[1]+tolerance, plateDim[0]+2*wall+4, height*2]); // z = spacer height *2
   }
 }
 // Create the top half of the rack slide
@@ -182,6 +183,7 @@ module modularSpacer(plateDim, wall, backWall, ledge, tolerance, height) {
 module rack_slide_top(plateDim, ledge, wall, backWall, left) {
   // TODO: make thicker or widther top slide to make flex clip stronger
   // TODO: reduce clip height. sm size sykinder but merge higher into slide
+  //  now doesn't lock in enough - Make stick out more wall/2 -> wall/3 ??
   // clip = wall*2 // r = wall // don't be relative to wall
   cutWidth = 0.5;
   cutLen   = 30;
@@ -189,13 +191,13 @@ module rack_slide_top(plateDim, ledge, wall, backWall, left) {
   offsetClip = (left) ? cutWidth : 0;
   union() {
     difference() {
-      cube([ledge, plateDim[0]+wall*2+backWall, wall]);
+      cube([ledge, plateDim[0]+wall*2+backWall, wall+1]);
       // cut slot, so end can flex
       translate([offsetCut, -0.01, -0.01])
-        cube([cutWidth, cutLen, wall+0.02]);
+        cube([cutWidth, cutLen, wall+1.02]);
     }
     // Add end clip
-    translate([offsetClip, wall, wall/2]) rotate([90,0,90])
+    translate([offsetClip, wall, wall/3]) rotate([90,0,90])
       difference() {
         // height = flex clip width
         cylinder(r=wall, h=ledge-cutWidth, center=false, $fn=50);
@@ -274,10 +276,11 @@ module modularSlots(plateDim, wall, backWall, clip, tolerance, top) {
   // Side Modular Slots
   // FIX: sides are 1mm short - Check after not rotate and + 1
   // Issue with rotate or printer (z axis accuracy)?
+  // side slot is now big - need to check if it is 1mm or less
   for (x=[-0.001, plateDim[1]+2*tolerance]) {
     for (y=[10, plateDim[0]+backWall+2*wall-10-clip[0]]) {
       translate([x, y, offsetZ])
-        cube([clip[2]+wall, clip[0]+tolerance+1, clip[1]]);
+        cube([clip[2]+wall, clip[0]+tolerance+0.5, clip[1]]);
     }
   }
 /*  for (x=[wall+clip[2]-0.001, plateDim[1]+wall+clip[2]+2*tolerance]) {
