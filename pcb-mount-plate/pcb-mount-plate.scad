@@ -10,6 +10,7 @@
 // Thingiverse Customizable: http://www.thingiverse.com/thing:1533164
 /*
   REVISION HISTORY
+  v0.5 Add Drawer
   v0.4 Add support for Rack case
   v0.3 Add initial customizer code
   v0.2 Add known boards and a bunch of other work
@@ -26,6 +27,7 @@
 //        small bumps to match both mount holes, slide drive in place
 //        front flex clip t ensure stays in place
 //      69.65-69.9 x 100.11-100.6 x 9,9.4
+//      Heights: 7, 9.5, 15
 //  Storage drawers: full box, edges on front to cover rack, cutout in slide for lock clip
 //    Open: top, left, right
 //    Options: hole for knob, raised label, sliding lid, pull tab
@@ -89,8 +91,8 @@ Mount3Y = 3.5;
 Mount4X = 61.5;
 Mount4Y = 52.5;
 /* [Drawer data] */
-DrawerHeight  = 20;
-DrawerWall    = 2;
+DrawerHeight  = 24.5;
+DrawerWall    = 2; // Should be thicker than 2 - Make sure affects bottom as well
 CaseLedge     = 6;
 CaseClip      = 4;
 DrawerOpenEnd = "Top"; // [Top, Right, Left]
@@ -386,18 +388,20 @@ function mountPoints(row_data, column_data) = [
 module drawer(plateDim, height, wall, caseLedge, caseClip, openEnd) {
   // front panel slightly taller?
   // probably need to add a tolerance to ledge - make draw box slightly smaller
-
+  lenTol=1; // increased spacing for where clip sits
   // mount plate
   translate([0, -caseLedge-2*wall, 0])
     cube(plateDim);
   // Drawer box
+  // TODO: make slightly longer so slides futher in and more room for clip - DONE
+  // TODO: make taller - DONE
   translate([0, -caseLedge+wall, 0])
     difference() {
-      cube([plateDim[0]+caseClip, plateDim[1]-2*caseLedge, height]);
+      cube([plateDim[0]+caseClip+lenTol, plateDim[1]-2*caseLedge, height]);
       if (openEnd == "Top") {
         // Open Top
         translate([wall, wall, plateDim[2]])
-          cube([plateDim[0]+wall, plateDim[1]-2*caseLedge-2*wall, height]);
+          cube([plateDim[0]+wall+lenTol, plateDim[1]-2*caseLedge-2*wall, height]);
       } else if (openEnd == "Left") {
         // Open left
         translate([wall, -0.001, plateDim[2]])
@@ -409,8 +413,10 @@ module drawer(plateDim, height, wall, caseLedge, caseClip, openEnd) {
       }
     }
   // Front Panel
-  translate([plateDim[0]+caseClip, -caseLedge-2*wall, 0])
-    cube([wall, plateDim[1], height]);
+  // TODO: Make wider to cover case walls- DONE
+  // TODO: make taller than box ??
+  translate([plateDim[0]+caseClip+lenTol-0.001, -caseLedge-3*wall, 0])
+    cube([wall, plateDim[1]+2*wall, height]);
   // Handle
   handleSize = 10;
   cornerRad  = 2;
@@ -418,6 +424,7 @@ module drawer(plateDim, height, wall, caseLedge, caseClip, openEnd) {
     rotate([0, 0, -90])
       union() {
         $fn = 50;
+        // Handle tab
         difference() {
           translate([plateDim[1]/8, handleSize/2-cornerRad/2, plateDim[2]])
             roundedBox([plateDim[1]/4, handleSize+cornerRad/2, plateDim[2]*2], 2, true);
@@ -425,7 +432,7 @@ module drawer(plateDim, height, wall, caseLedge, caseClip, openEnd) {
             cube([plateDim[1]/4, cornerRad, plateDim[2]*4]);
         }
         //cube([plateDim[1]/4, handleSize, plateDim[2]*2]);
-        // Maybe more gradual curve ?
+        // Handle rounded connect to front panel
         difference() {
           translate([0, 0, plateDim[2]+cornerRad/2])
             cube([plateDim[1]/4, cornerRad, cornerRad]);
